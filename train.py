@@ -98,14 +98,14 @@ def train_epoch(model, device, train_loader, criterion, optimizer):
         running_loss = loss_accum / (index + 1)
         running_acc = np.mean(train_acc)
 
-        if index % print_every == 0:
-            print('[train] _iter: {:>2d}, loss = {:.5f}, accuracy = {:.5f}'.format(index, running_loss, running_acc))
+        # if index % print_every == 0:
+        #     print('[train] _iter: {:>2d}, loss = {:.5f}, accuracy = {:.5f}'.format(index, running_loss, running_acc))
 
     ave_loss = loss_accum / (index + 1)
     ave_acc = np.mean(train_acc)
     ave_acc_2 = float(total_correct_samples) / total_samples
 
-    print('[train] _iter: {:>2d}, loss = {:.5f}, accuracy = {:.5f}'.format(index, ave_loss, ave_acc_2))
+    # print('[train] _iter: {:>2d}, loss = {:.5f}, accuracy = {:.5f}'.format(index, ave_loss, ave_acc_2))
     
     # if index % val_every == 0:
     #     validate(model, loader_val)
