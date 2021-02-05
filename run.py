@@ -5,15 +5,10 @@ from sklearn.model_selection import train_test_split
 
 import argparse
 
-from .train import *
-from .dataset import *
-from .utils import *
-from .model import *
-
-# from train import *
-# from dataset import *
-# from utils import *
-# from model import *
+from train import *
+from dataset import *
+from utils import *
+from model import *
 
 def run(
     path_to_data='/',
@@ -79,6 +74,10 @@ if __name__ == "__main__":
 
     # seed_everything(args.seed)
 
-    train_info = run(args.path_to_data, args.batch_size, args.num_epoch)
+    train_info, model = run(
+        args.path_to_data,
+        args.batch_size,
+        num_epoch=args.num_epoch
+        )
 
     
