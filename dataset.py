@@ -4,7 +4,44 @@ from torch.utils.data import Dataset
 from torchvision import transforms as T
 from PIL import Image
 
+import albumentations as A
+
 import matplotlib.pyplot as plt
+
+# def get_train_transform():
+
+def create_datasets(train_df, valid_df, img_path):
+    train_transform = T.Compose([
+        T.Resize((256, 256)),
+        T.ToTensor(),
+    ])
+
+    valid_transform = T.Compose([
+        T.Resize((256, 256)),
+        T.ToTensor(),
+    ])
+
+    train_dataset = ImageDataset(train_df, img_path, train_transform)
+    valid_dataset = ImageDataset(valid_df, img_path, valid_transform)
+
+    return train_dataset, valid_dataset
+
+def create_datasets_albu(train_df, valid_df, img_path):
+    train_transform = A.Compose([
+        A.Resize(256, 256),
+        A.VerticalFlip(p=0.5),
+        A.HorizontalFlip(p=0.5),
+        A.CoarseDropout(max_holes=2, max_height=64, max_width=64, p=1),
+    ])
+
+    valid_transform = A.Compose([
+        A.Resize(256, 256),
+    ])
+
+    train_dataset = ImageDatasetAlbu(train_df, img_path, train_transform)
+    valid_dataset = ImageDatasetAlbu(valid_df, img_path, valid_transform)
+
+    return train_dataset, valid_dataset
 
 class ImageDataset(Dataset):
     def __init__(self, df, path, transform=None):

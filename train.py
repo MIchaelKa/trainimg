@@ -160,11 +160,12 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, n
         valid_acc_epochs.append(valid_acc_mean)
              
         print('[valid] epoch: {:>2d}, loss = {:.5f}, accuracy = {:.5f}, time: {}' \
-              .format(epoch+1, valid_loss_mean, valid_acc_mean, format_time(time.time() - t2)))
+              .format(epoch+1, valid_loss_mean, valid_acc_mean, format_time(time.time() - t1)))
         
         # Epoch
-        print('------- epoch: {:>2d}, time: {}'.format(epoch+1, format_time(time.time() - t1)))
-        print("---------------------------------------------------------")
+        # print('------- epoch: {:>2d}, time: {}'.format(epoch+1, format_time(time.time() - t1)))
+        # print("---------------------------------------------------------")
+        print('')
         
     print('training finished for: {}'.format(format_time(time.time() - t0)))
 
