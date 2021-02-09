@@ -4,7 +4,7 @@ import random
 import os
 
 major_version = 1
-minor_version = 1
+minor_version = 2
 version = 0
 
 def print_version():

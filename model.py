@@ -1,14 +1,18 @@
 import torch
 import torch.nn as nn
 
+from torchvision import models
+
 class ResNetModel(nn.Module):
     def __init__(self):
         super().__init__()
+        print('Init resnet18')
         resnet = models.resnet18(pretrained=True)
-#         resnet = models.resnet34(pretrained=True)
+        # resnet = models.resnet34(pretrained=True)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
-    
-        self.fc = nn.Linear(512, 5)
+
+        in_features = resnet.fc.in_features  
+        self.fc = nn.Linear(in_features, 5)
         
     def forward(self, x):
         
