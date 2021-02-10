@@ -115,9 +115,12 @@ def run_loader(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3, 5, 7, 8, 9], gamma=0.2)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
+
     print('')
     print('Start training...')
-    train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, num_epoch)
+    train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, scheduler, num_epoch)
 
     return train_info
 

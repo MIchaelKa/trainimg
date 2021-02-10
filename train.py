@@ -112,7 +112,7 @@ def train_epoch(model, device, train_loader, criterion, optimizer):
 
     return train_loss, train_acc
 
-def train_model(model, device, train_loader, val_loader, criterion, optimizer, num_epochs):
+def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs):
    
     train_loss_history = []
     train_acc_history = []
@@ -125,6 +125,8 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, n
     
     valid_loss_epochs = []
     valid_acc_epochs = []
+
+    lr_history = []
     
     t0 = time.time()
     
@@ -158,6 +160,9 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, n
         
         valid_loss_epochs.append(valid_loss_mean)
         valid_acc_epochs.append(valid_acc_mean)
+
+        lr_history.append(scheduler.get_last_lr())  
+        scheduler.step()
              
         print('[valid] epoch: {:>2d}, loss = {:.5f}, accuracy = {:.5f}, time: {}' \
               .format(epoch+1, valid_loss_mean, valid_acc_mean, format_time(time.time() - t1)))
@@ -178,6 +183,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, n
         'valid_acc_history' : valid_acc_history,
         'valid_loss_epochs' : valid_loss_epochs,
         'valid_acc_epochs' : valid_acc_epochs,
+        'lr_history' : lr_history,
     }
  
     return train_info

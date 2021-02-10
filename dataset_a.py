@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 
 import albumentations as A
+# from albumentations.pytorch import ToTensorV2
 
 def get_train_transform():
     transform = A.Compose([
@@ -17,6 +18,13 @@ def get_train_transform():
         
         A.VerticalFlip(p=0.5),
         A.HorizontalFlip(p=0.5),
+            
+        # A.OneOf([
+        #     A.VerticalFlip(p=0.5),
+        #     A.HorizontalFlip(p=0.5),
+        # ], p=0.5),
+
+        # A.Rotate(p=0.8),
         
         # A.CoarseDropout(max_holes=3, max_height=32, max_width=32, p=1),
         A.CoarseDropout(max_holes=10, max_height=32, max_width=32, p=0.7),
