@@ -9,8 +9,8 @@ from sklearn.model_selection import train_test_split
 import argparse
 
 from train import *
-from dataset import *
-# from dataset_a import *
+# from dataset import *
+from dataset_a import *
 from utils import *
 
 def create_datasets(
@@ -119,7 +119,7 @@ def run_loader(
     print('Start training...')
     train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, num_epoch)
 
-    return train_info, model
+    return train_info
 
 def run(
     model,
@@ -139,9 +139,9 @@ def run(
     # train_dataset = create_train_dataset(path_to_data)
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
 
-    train_info, model = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
+    train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
 
-    return train_info, model
+    return train_info
     
 
 if __name__ == "__main__":

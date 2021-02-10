@@ -4,6 +4,39 @@ import matplotlib.pyplot as plt
 
 # sns.set()
 
+def show_train_info(train_info):
+    _, axes = plt.subplots(2, 2, figsize=(15,10))
+
+    axes[0,0].set_title("Train loss")
+    axes[0,0].plot(train_info['train_loss_history'])
+
+    axes[0,1].set_title("Valid loss")
+    axes[0,1].plot(train_info['valid_loss_history'])
+
+    axes[1,0].set_title("Train acc")
+    axes[1,0].plot(train_info['train_acc_history'])
+
+    axes[1,1].set_title("Valid acc")
+    axes[1,1].plot(train_info['valid_acc_history'])
+
+def show_train_info_epoch(train_info, params):
+    _, axes = plt.subplots(1, 2, figsize=(17,6))
+
+    x = np.arange(params['num_epoch'])
+
+    axes[0].set_title("Loss")
+    axes[0].plot(train_info['train_loss_epochs'], '-o')
+    axes[0].plot(train_info['valid_loss_epochs'], '-o')
+    axes[0].set_xticks(x)
+    axes[0].legend(['train', 'val'], loc='upper right')
+
+    axes[1].set_title("Acc")
+    axes[1].plot(train_info['train_acc_epochs'], '-o')
+    axes[1].plot(train_info['valid_acc_epochs'], '-o')
+    axes[1].set_xticks(x)
+    axes[1].legend(['train', 'val'], loc='lower right')
+
+
 def show_dataset_grid(dataset):
     nrow, ncol = 3, 3
     fig, axes = plt.subplots(nrow, ncol, figsize=(18, 18))
