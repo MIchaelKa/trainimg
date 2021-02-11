@@ -36,6 +36,12 @@ def show_train_info_epoch(train_info, params):
     axes[1].set_xticks(x)
     axes[1].legend(['train', 'val'], loc='lower right')
 
+def show_history_epoch(history, params):
+    fig, ax = plt.subplots(figsize=(6,4))
+    x = np.arange(params['num_epoch'])
+    ax.set_xticks(x)
+    ax.plot(history, '-o')
+
 
 def show_dataset_grid(dataset):
     nrow, ncol = 3, 3
@@ -71,10 +77,12 @@ def show_dataset(dataset, count=5, random=True):
 def show_conv_weight(conv):
     weight = conv.weight.data.cpu().numpy()
     weight = weight.transpose(0, 2, 3, 1)
+    num_weight = weight.shape[0]
     
     ubound = 255
-    nrow, ncol = 8, 8
-    fig, axes = plt.subplots(nrow, ncol, figsize=(8, 8))
+    ncol = 8
+    nrow = int(num_weight / ncol)
+    fig, axes = plt.subplots(nrow, ncol, figsize=(ncol, nrow))
     axes = axes.flatten()
     
     for i, ax in enumerate(axes):

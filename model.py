@@ -3,12 +3,58 @@ import torch.nn as nn
 
 from torchvision import models
 
+from efficientnet_pytorch import EfficientNet
+
+import torch.nn.functional as F
+
+class DenseNetModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        print('Init densenet121')
+
+        densenet = models.densenet121(pretrained=True)
+        self.backbone = densenet.features
+        # self.backbone = nn.Sequential(*list(densenet.children())[:-1])
+
+        in_features = densenet.classifier.in_features  
+        self.fc = nn.Linear(in_features, 5)
+        
+        
+    def forward(self, x):
+      
+        x = self.backbone(x)
+        x = F.relu(x, inplace=True)
+        x = F.adaptive_avg_pool2d(x, (1, 1))
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        
+        return x
+
+class EfficientNetModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        print('Init efficientnet-b0')
+
+        self.backbone = EfficientNet.from_pretrained('efficientnet-b0')
+        self.fc = nn.Linear(self.backbone._fc.in_features, 5)     
+        self.backbone._fc = nn.Identity()
+        
+    def forward(self, x):
+        
+#         x = self.backbone.extract_features(x)       
+        x = self.backbone(x)
+        
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        
+        return x
+
 class ResNetModel(nn.Module):
     def __init__(self):
         super().__init__()
-        print('Init resnet18')
-        resnet = models.resnet18(pretrained=True)
-        # resnet = models.resnet34(pretrained=True)
+        print('Init resnet34')
+        # resnet = models.resnet18(pretrained=True)
+        resnet = models.resnet34(pretrained=True)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
 
         in_features = resnet.fc.in_features  
@@ -47,3 +93,7 @@ class SimpleModel(nn.Module):
         x = self.fc(x)
         
         return x
+
+
+def get_num_of_params(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)

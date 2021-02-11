@@ -115,8 +115,19 @@ def run_loader(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3, 5, 7, 8, 9], gamma=0.2)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
+    # resnet18
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3, 5, 7, 8, 9], gamma=0.2)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3, 5, 8], gamma=0.4)
+
+    # resnet32
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 3, 5, 7, 9], gamma=0.4)
+    
+    # effnet
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [4, 6, 8], gamma=0.4)
+    
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17
+
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
 
     print('')
     print('Start training...')
