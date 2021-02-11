@@ -12,6 +12,7 @@ from train import *
 # from dataset import *
 from dataset_a import *
 from utils import *
+from model import *
 
 def create_datasets(
     path_to_data,
@@ -127,7 +128,7 @@ def run_loader(
     
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17
 
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
 
     print('')
     print('Start training...')
@@ -136,7 +137,6 @@ def run_loader(
     return train_info
 
 def run(
-    model,
     path_to_data='/',
     batch_size=32,
     reduce_train=False,
@@ -153,9 +153,13 @@ def run(
     # train_dataset = create_train_dataset(path_to_data)
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
 
+    # model = ResNetModel()
+    # model = EfficientNetModel()
+    model = DenseNetModel()
+
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
 
-    return train_info
+    return train_info, model
     
 
 if __name__ == "__main__":
