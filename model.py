@@ -2,9 +2,6 @@ import torch
 import torch.nn as nn
 
 from torchvision import models
-
-from efficientnet_pytorch import EfficientNet
-
 import torch.nn.functional as F
 
 class DenseNetModel(nn.Module):
@@ -25,25 +22,6 @@ class DenseNetModel(nn.Module):
         x = self.backbone(x)
         x = F.relu(x, inplace=True)
         x = F.adaptive_avg_pool2d(x, (1, 1))
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
-        
-        return x
-
-class EfficientNetModel(nn.Module):
-    def __init__(self):
-        super().__init__()
-        print('Init efficientnet-b0')
-
-        self.backbone = EfficientNet.from_pretrained('efficientnet-b0')
-        self.fc = nn.Linear(self.backbone._fc.in_features, 5)     
-        self.backbone._fc = nn.Identity()
-        
-    def forward(self, x):
-        
-#         x = self.backbone.extract_features(x)       
-        x = self.backbone(x)
-        
         x = torch.flatten(x, 1)
         x = self.fc(x)
         
