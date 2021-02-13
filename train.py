@@ -4,6 +4,8 @@ import torch
 import time
 import datetime
 
+from sklearn.metrics import confusion_matrix
+
 def format_time(elapsed):
     '''
     Takes a time in seconds and returns a string hh:mm:ss
@@ -30,6 +32,9 @@ def validate(model, device, val_loader, criterion):
     total_correct_samples = 0
     total_samples = 0
 
+    predictions = []
+    ground_truth = []
+
     with torch.no_grad():
         for _, (x_batch, y_batch) in enumerate(val_loader):
             x_batch = x_batch.to(device)
@@ -51,10 +56,19 @@ def validate(model, device, val_loader, criterion):
             total_correct_samples += correct_samples
             total_samples += y_batch.shape[0]
 
+            # Save data for calculating of confusion matrix
+            predictions.append(indices)
+            ground_truth.append(y_batch)
+
+    predictions = torch.cat(predictions).cpu().numpy()
+    ground_truth = torch.cat(ground_truth).cpu().numpy()
+
+    cm = confusion_matrix(ground_truth, predictions)
+
     valid_acc_total = float(total_correct_samples) / total_samples   
     # print('[valid] -------------------------- accuracy = {:.5f}'.format(valid_acc_total))
     
-    return loss_history, acc_history
+    return loss_history, acc_history, cm
 
 def train_epoch(model, device, train_loader, criterion, optimizer):   
     
@@ -150,7 +164,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
   
         # Validate
         t2 = time.time()     
-        valid_loss, valid_acc = validate(model, device, val_loader, criterion)
+        valid_loss, valid_acc, cm = validate(model, device, val_loader, criterion)
         
         valid_loss_history.extend(valid_loss)
         valid_acc_history.extend(valid_acc)
@@ -184,6 +198,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         'valid_loss_epochs' : valid_loss_epochs,
         'valid_acc_epochs' : valid_acc_epochs,
         'lr_history' : lr_history,
+        'cm' : cm,
     }
  
     return train_info

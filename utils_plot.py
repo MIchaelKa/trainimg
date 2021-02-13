@@ -94,3 +94,20 @@ def show_conv_weight(conv):
         
     plt.tight_layout()
     plt.show()
+
+def show_confusion_matrix(confusion_matrix):
+    # plt.figure(figsize=(7,7))
+    plt.title("Confusion matrix")
+
+    sns.heatmap(
+        confusion_matrix,
+        cmap="GnBu",
+        fmt="d",
+        linewidths=1.5,
+        annot=True
+    )
+
+    plt.yticks(rotation=0)
+    plt.ylabel("Predicted")
+    plt.xlabel("Target")
+    plt.show()
