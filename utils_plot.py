@@ -19,10 +19,10 @@ def show_train_info(train_info):
     axes[1,1].set_title("Valid acc")
     axes[1,1].plot(train_info['valid_acc_history'])
 
-def show_train_info_epoch(train_info, params):
+def show_train_info_epoch(train_info):
     _, axes = plt.subplots(1, 2, figsize=(17,6))
 
-    x = np.arange(params['num_epoch'])
+    x = np.arange(len(train_info['train_loss_epochs']))
 
     axes[0].set_title("Loss")
     axes[0].plot(train_info['train_loss_epochs'], '-o')
@@ -36,9 +36,9 @@ def show_train_info_epoch(train_info, params):
     axes[1].set_xticks(x)
     axes[1].legend(['train', 'val'], loc='lower right')
 
-def show_history_epoch(history, params):
+def show_history_epoch(history):
     fig, ax = plt.subplots(figsize=(6,4))
-    x = np.arange(params['num_epoch'])
+    x = np.arange(len(history))
     ax.set_xticks(x)
     ax.plot(history, '-o')
 

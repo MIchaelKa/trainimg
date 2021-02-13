@@ -125,13 +125,16 @@ def run_loader(
 
     # resnet32
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 3, 5, 7, 9], gamma=0.4)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 4, 7, 9], gamma=0.6)
     
     # effnet
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [4, 6, 8], gamma=0.4)
-    
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17
 
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+    # densenet
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 3, 4, 6, 8], gamma=0.4)
+    
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
 
     print('')
     print('Start training...')
@@ -156,14 +159,45 @@ def run(
     # train_dataset = create_train_dataset(path_to_data)
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
 
-    # model = ResNetModel()
+    # model = SimpleModel()
+    model = ResNetModel()
     # model = EfficientNetModel()
-    model = DenseNetModel()
+    # model = DenseNetModel()
 
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
 
     return train_info, model
-    
+
+
+def main(path_to_data):
+    SEED = 2020
+    seed_everything(SEED)
+    print_version()
+
+    params = {
+        'path_to_data'  : path_to_data,
+        'batch_size'    : 32,
+        'reduce_train'  : True,
+        'train_number'  : 12000,
+        'valid_number'  : 1000, 
+        'learning_rate' : 1e-4, # 3e-4, 1e-4
+        'weight_decay'  : 0, # 1e-3, 5e-4
+        'num_epoch'     : 10
+    }
+
+    # small config 
+    # params = {
+    #     'path_to_data'  : path_to_data,
+    #     'batch_size'    : 2,
+    #     'reduce_train'  : True,
+    #     'train_number'  : 10,
+    #     'valid_number'  : 4, 
+    #     'learning_rate' : 3e-4, # 1e-4
+    #     'weight_decay'  : 0, # 1e-3, 5e-4
+    #     'num_epoch'     : 3
+    # }
+
+    return run(**params)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -14,7 +14,7 @@ class EfficientNetModel(nn.Module):
         
     def forward(self, x):
         
-#         x = self.backbone.extract_features(x)       
+        # x = self.backbone.extract_features(x)
         x = self.backbone(x)
         
         x = torch.flatten(x, 1)
