@@ -30,9 +30,10 @@ class DenseNetModel(nn.Module):
 class ResNetModel(nn.Module):
     def __init__(self):
         super().__init__()
-        print('Init resnet34')
+        print('Init resnext50_32x4d')
         # resnet = models.resnet18(pretrained=True)
-        resnet = models.resnet34(pretrained=True)
+        # resnet = models.resnet34(pretrained=True)
+        resnet = models.resnext50_32x4d(pretrained=True)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
 
         in_features = resnet.fc.in_features  
