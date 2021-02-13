@@ -126,13 +126,13 @@ def run_loader(
     # resnet32
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 3, 5, 7, 9], gamma=0.4)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 4, 6, 8, 9], gamma=0.6)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 6, 8, 9], gamma=0.6)
     
     # effnet
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [4, 6, 8], gamma=0.4)
 
     # densenet
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 3, 4, 6, 8], gamma=0.4)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 3, 5, 7, 9], gamma=0.4)
     
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
 
@@ -160,9 +160,9 @@ def run(
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
 
     # model = SimpleModel()
-    model = ResNetModel()
+    # model = ResNetModel()
     # model = EfficientNetModel()
-    # model = DenseNetModel()
+    model = DenseNetModel()
 
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
 
@@ -179,11 +179,11 @@ def main(path_to_data, debug=False):
             'path_to_data'  : path_to_data,
             'batch_size'    : 2,
             'reduce_train'  : True,
-            'train_number'  : 10,
-            'valid_number'  : 4, 
+            'train_number'  : 4,
+            'valid_number'  : 2, 
             'learning_rate' : 3e-4, # 1e-4
             'weight_decay'  : 0, # 1e-3, 5e-4
-            'num_epoch'     : 5
+            'num_epoch'     : 10
         }
     else:
         params = {
@@ -192,7 +192,7 @@ def main(path_to_data, debug=False):
             'reduce_train'  : True,
             'train_number'  : 12000,
             'valid_number'  : 1000, 
-            'learning_rate' : 2e-4, # 3e-4, 1e-4
+            'learning_rate' : 3e-4,
             'weight_decay'  : 0, # 1e-3, 5e-4
             'num_epoch'     : 10
         }

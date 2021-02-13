@@ -5,7 +5,7 @@ import os
 
 major_version = 1
 minor_version = 3
-version = 0
+version = 1
 
 def print_version():
     print(f'Version: {major_version}.{minor_version}.{version}')

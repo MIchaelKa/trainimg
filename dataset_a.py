@@ -8,9 +8,6 @@ import albumentations as A
 def get_train_transform():
     transform = A.Compose([
 
-        # A.Resize(256, 256),
-        # A.RandomCrop(width=256, height=256),
-
         A.OneOf([
             A.Resize(256, 256),
             A.RandomCrop(width=256, height=256),
@@ -18,16 +15,15 @@ def get_train_transform():
         
         A.VerticalFlip(p=0.5),
         A.HorizontalFlip(p=0.5),
-            
-        # A.OneOf([
-        #     A.VerticalFlip(p=0.5),
-        #     A.HorizontalFlip(p=0.5),
-        # ], p=0.5),
 
-        # A.Rotate(p=0.8),
+        # A.Rotate(180, p=0.8),
         
+        # A.Blur(p=0.2),
+        # A.ColorJitter(p=0.4),
+    
         # A.CoarseDropout(max_holes=3, max_height=32, max_width=32, p=1),
-        A.CoarseDropout(max_holes=10, max_height=32, max_width=32, p=0.7),
+        # A.CoarseDropout(max_holes=10, max_height=32, max_width=32, p=0.7),
+
         # A.ToTensorV2(),
         # A.Normalize(mean=[0.485, 0.456, 0.406],
         #             std=[0.229, 0.224, 0.225])
