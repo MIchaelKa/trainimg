@@ -57,13 +57,14 @@ def create_train_dataset(path_to_data):
 def create_dataloaders(
     train_dataset,
     valid_dataset,
-    batch_size
+    batch_size_train,
+    batch_size_valid
     ):
     
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
+    valid_loader = DataLoader(valid_dataset, batch_size=batch_size_valid, shuffle=False)
 
-    print(f'DataLoader size, train: {len(train_loader)}, valid: {len(valid_loader)}, batch_size: {batch_size}')
+    print(f'DataLoader size, train: {len(train_loader)}, valid: {len(valid_loader)}, batch_size_train: {batch_size_train}')
     
     return train_loader, valid_loader
 
@@ -119,21 +120,8 @@ def run_loader(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    # resnet18
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3, 5, 7, 8, 9], gamma=0.2)
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3, 5, 8], gamma=0.4)
-
-    # resnet32
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 3, 5, 7, 9], gamma=0.4)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3, 6, 9], gamma=0.4)
-    
-    # effnet
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [4, 6, 8], gamma=0.4)
-
-    # densenet
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 3, 5, 7, 9], gamma=0.4)
-    
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 4, 6, 8, 9], gamma=0.4)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17  
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
 
     print('')
@@ -144,7 +132,8 @@ def run_loader(
 
 def run(
     path_to_data='/',
-    batch_size=32,
+    batch_size_train=32,
+    batch_size_valid=32,
     reduce_train=False,
     train_number=0,
     valid_number=0,
@@ -154,7 +143,7 @@ def run(
     ):
     
     train_dataset, valid_dataset = create_datasets(path_to_data, reduce_train, train_number, valid_number)
-    train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size)
+    train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
     # train_dataset = create_train_dataset(path_to_data)
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
@@ -176,25 +165,27 @@ def main(path_to_data, debug=False):
 
     if debug:
         params = {
-            'path_to_data'  : path_to_data,
-            'batch_size'    : 2,
-            'reduce_train'  : True,
-            'train_number'  : 4,
-            'valid_number'  : 2, 
-            'learning_rate' : 3e-4, # 1e-4
-            'weight_decay'  : 0, # 1e-3, 5e-4
-            'num_epoch'     : 10
+            'path_to_data'     : path_to_data,
+            'batch_size_train' : 2,
+            'batch_size_valid' : 2,
+            'reduce_train'     : True,
+            'train_number'     : 4,
+            'valid_number'     : 2, 
+            'learning_rate'    : 3e-4, # 1e-4
+            'weight_decay'     : 0, # 1e-3, 5e-4
+            'num_epoch'        : 10
         }
     else:
         params = {
-            'path_to_data'  : path_to_data,
-            'batch_size'    : 32,
-            'reduce_train'  : True,
-            'train_number'  : 12000,
-            'valid_number'  : 1000, 
-            'learning_rate' : 2e-4,
-            'weight_decay'  : 0, # 1e-3, 5e-4
-            'num_epoch'     : 10
+            'path_to_data'     : path_to_data,
+            'batch_size_train' : 32,
+            'batch_size_valid' : 32,
+            'reduce_train'     : True,
+            'train_number'     : 12000,
+            'valid_number'     : 1000, 
+            'learning_rate'    : 2e-4,
+            'weight_decay'     : 0, # 1e-3, 5e-4
+            'num_epoch'        : 10
         }
 
     return run(**params)
