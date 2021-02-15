@@ -5,12 +5,12 @@ from PIL import Image
 import albumentations as A
 # from albumentations.pytorch import ToTensorV2
 
-def get_train_transform():
+def get_train_transform(img_size):
     transform = A.Compose([
 
         A.OneOf([
-            A.Resize(256, 256),
-            A.RandomCrop(width=256, height=256),
+            A.Resize(img_size, img_size),
+            A.RandomCrop(width=img_size, height=img_size),
         ], p=1),
         
         A.VerticalFlip(p=0.5),
@@ -30,9 +30,9 @@ def get_train_transform():
     ])
     return transform
 
-def get_valid_transform():
+def get_valid_transform(img_size):
     transform = A.Compose([
-        A.Resize(256, 256),
+        A.Resize(img_size, img_size),
     ])
     return transform
 

@@ -20,12 +20,13 @@ from model import *
 
 def create_datasets(
     path_to_data,
+    img_size,
     reduce_train,
     train_number,
     valid_number
     ):
     train_df_all = pd.read_csv(path_to_data + 'train.csv')
-    print(f'Dataset size: {train_df_all.shape}')
+    print(f'Dataset size: {train_df_all.shape}, img_size: {img_size}')
 
     # train_df = train_df_all
     train_df = train_df_all.sample(frac=1).reset_index(drop=True)
@@ -40,18 +41,18 @@ def create_datasets(
 
     img_path = path_to_data + '/train_images/'
 
-    train_dataset = ImageDataset(train_df, img_path, get_train_transform())
-    valid_dataset = ImageDataset(valid_df, img_path, get_valid_transform())
+    train_dataset = ImageDataset(train_df, img_path, get_train_transform(img_size))
+    valid_dataset = ImageDataset(valid_df, img_path, get_valid_transform(img_size))
 
     return train_dataset, valid_dataset, valid_df
 
-def create_train_dataset(path_to_data):
+def create_train_dataset(path_to_data, img_size):
     train_df_all = pd.read_csv(path_to_data + 'train.csv')
     print(f'Dataset size: {train_df_all.shape}')
 
     img_path = path_to_data + '/train_images/'
 
-    train_dataset = ImageDataset(train_df_all, img_path, get_train_transform())
+    train_dataset = ImageDataset(train_df_all, img_path, get_train_transform(img_size))
 
     return train_dataset
 
@@ -102,7 +103,8 @@ def run_loader(
     valid_loader,
     learning_rate=3e-4,
     weight_decay=1e-3,
-    num_epoch=10
+    num_epoch=10,
+    fold=0
     ):
 
     run_decription = (
@@ -127,7 +129,7 @@ def run_loader(
 
     print('')
     print('Start training...')
-    train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, scheduler, num_epoch)
+    train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, scheduler, num_epoch, fold)
 
     return train_info
 
@@ -138,12 +140,13 @@ def run(
     reduce_train=False,
     train_number=0,
     valid_number=0,
+    img_size=256,
     learning_rate=3e-4,
     weight_decay=1e-3,
     num_epoch=10
     ):
     
-    train_dataset, valid_dataset, valid_df = create_datasets(path_to_data, reduce_train, train_number, valid_number)
+    train_dataset, valid_dataset, valid_df = create_datasets(path_to_data, img_size, reduce_train, train_number, valid_number)
     train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
     # train_dataset = create_train_dataset(path_to_data)
@@ -154,7 +157,7 @@ def run(
     # model = EfficientNetModel()
     # model = DenseNetModel()
 
-    train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
+    train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, 0)
 
     valid_df['probs'] = train_info['probs']
     valid_df['preds'] = train_info['preds']
@@ -210,7 +213,7 @@ def run_cv(
         train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
         model = ResNetModel()
-        train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
+        train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, fold)
         train_infos.append(train_info)
 
         X_valid['probs'] = train_info['probs']
@@ -232,7 +235,8 @@ def main(path_to_data, debug=False):
             'batch_size_valid' : 2,
             'reduce_train'     : True,
             'train_number'     : 10,
-            'valid_number'     : 10, 
+            'valid_number'     : 10,
+            'img_size'         : 384,
             'learning_rate'    : 3e-4, # 1e-4
             'weight_decay'     : 0, # 1e-3, 5e-4
             'num_epoch'        : 5
@@ -244,7 +248,8 @@ def main(path_to_data, debug=False):
             'batch_size_valid' : 32,
             'reduce_train'     : False,
             'train_number'     : 12000,
-            'valid_number'     : 1000, 
+            'valid_number'     : 1000,
+            'img_size'         : 384,
             'learning_rate'    : 2e-4,
             'weight_decay'     : 0, # 1e-3, 5e-4
             'num_epoch'        : 10

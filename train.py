@@ -133,7 +133,7 @@ def train_epoch(model, device, train_loader, criterion, optimizer):
 
     return train_loss, train_acc
 
-def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs):
+def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, fold):
    
     train_loss_history = []
     train_acc_history = []
@@ -194,7 +194,9 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
             best_cm = cm
             best_probs = probs
             best_preds = preds
-            #save model here
+
+            #save model
+            torch.save(model.state_dict(), f'model_{fold}.pth')
 
         lr_history.append(scheduler.get_last_lr())  
         scheduler.step()
@@ -207,7 +209,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         # print("---------------------------------------------------------")
         print('')
 
-    print('[valid] best epoch {:>2d}, accuracy = {:.5f}'.format(epoch+1, valid_best_acc)) 
+    print('[valid] best epoch {:>2d}, accuracy = {:.5f}'.format(best_epoch+1, valid_best_acc)) 
     print('training finished for: {}'.format(format_time(time.time() - t0)))
 
     train_info = {
