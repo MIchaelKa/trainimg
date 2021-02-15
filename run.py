@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import SubsetRandomSampler
 
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, KFold
 
 import argparse
 
@@ -42,7 +43,7 @@ def create_datasets(
     train_dataset = ImageDataset(train_df, img_path, get_train_transform())
     valid_dataset = ImageDataset(valid_df, img_path, get_valid_transform())
 
-    return train_dataset, valid_dataset
+    return train_dataset, valid_dataset, valid_df
 
 def create_train_dataset(path_to_data):
     train_df_all = pd.read_csv(path_to_data + 'train.csv')
@@ -142,7 +143,7 @@ def run(
     num_epoch=10
     ):
     
-    train_dataset, valid_dataset = create_datasets(path_to_data, reduce_train, train_number, valid_number)
+    train_dataset, valid_dataset, valid_df = create_datasets(path_to_data, reduce_train, train_number, valid_number)
     train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
     # train_dataset = create_train_dataset(path_to_data)
@@ -155,7 +156,68 @@ def run(
 
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
 
+    valid_df['probs'] = train_info['probs']
+    valid_df['preds'] = train_info['preds']
+    valid_df.to_csv('valid_df.csv', index=False)
+
     return train_info, model
+
+def run_cv(
+    path_to_data,
+    batch_size_train=32,
+    batch_size_valid=32,
+    learning_rate=3e-4,
+    weight_decay=1e-3,
+    num_epoch=10,
+    debug=False
+    ):
+
+    train_df = pd.read_csv(path_to_data + 'train.csv')
+    train_df = train_df.sample(frac=1).reset_index(drop=True)
+    # train_df = train_df.sort_values('label').reset_index(drop=True)
+    if debug:
+        train_df = train_df.sample(frac=1).reset_index(drop=True).head(20)
+
+    print(f'Dataset size: {train_df.shape}')
+
+    # skf = StratifiedKFold(n_splits=5, random_state=SEED, shuffle=True)
+    skf = StratifiedKFold(n_splits=5)
+    # skf = KFold(n_splits=5)
+
+    X = train_df  
+    y = train_df['label'].values # train.label.values
+
+    img_path = path_to_data + '/train_images/'
+
+    train_infos = []
+    
+    for fold, (train_index, test_index) in enumerate(skf.split(X, y)):
+        X_train, X_valid = X.loc[train_index], X.loc[test_index]
+
+        print('')
+        print(f'Fold: {fold}')
+        print(X_train.shape, X_valid.shape)
+        print(X_train['label'].value_counts())
+        print(X_valid['label'].value_counts())
+        print('')
+
+        # print(train_index.shape, test_index.shape)
+        # print(train_index[:5], train_index[-5:], test_index[:5])
+
+        train_dataset = ImageDataset(X_train, img_path, get_train_transform())
+        valid_dataset = ImageDataset(X_valid, img_path, get_valid_transform())
+
+        train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
+
+        model = ResNetModel()
+        train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch)
+        train_infos.append(train_info)
+
+        X_valid['probs'] = train_info['probs']
+        X_valid['preds'] = train_info['preds']
+        X_valid.to_csv(f'valid_df_{fold}.csv', index=False)
+
+    return train_infos
 
 
 def main(path_to_data, debug=False):
@@ -169,18 +231,18 @@ def main(path_to_data, debug=False):
             'batch_size_train' : 2,
             'batch_size_valid' : 2,
             'reduce_train'     : True,
-            'train_number'     : 4,
-            'valid_number'     : 2, 
+            'train_number'     : 10,
+            'valid_number'     : 10, 
             'learning_rate'    : 3e-4, # 1e-4
             'weight_decay'     : 0, # 1e-3, 5e-4
-            'num_epoch'        : 10
+            'num_epoch'        : 5
         }
     else:
         params = {
             'path_to_data'     : path_to_data,
             'batch_size_train' : 32,
             'batch_size_valid' : 32,
-            'reduce_train'     : True,
+            'reduce_train'     : False,
             'train_number'     : 12000,
             'valid_number'     : 1000, 
             'learning_rate'    : 2e-4,

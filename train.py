@@ -34,6 +34,7 @@ def validate(model, device, val_loader, criterion):
 
     predictions = []
     ground_truth = []
+    probs = []
 
     with torch.no_grad():
         for _, (x_batch, y_batch) in enumerate(val_loader):
@@ -60,15 +61,21 @@ def validate(model, device, val_loader, criterion):
             predictions.append(indices)
             ground_truth.append(y_batch)
 
+            # Save probs
+            max_probs, _ = torch.max(torch.softmax(output, 1), 1)
+            probs.append(max_probs)
+
     predictions = torch.cat(predictions).cpu().numpy()
     ground_truth = torch.cat(ground_truth).cpu().numpy()
 
     cm = confusion_matrix(ground_truth, predictions)
 
+    probs = torch.cat(probs).cpu().numpy()
+
     valid_acc_total = float(total_correct_samples) / total_samples   
     # print('[valid] -------------------------- accuracy = {:.5f}'.format(valid_acc_total))
     
-    return loss_history, acc_history, cm
+    return loss_history, acc_history, cm, probs, predictions
 
 def train_epoch(model, device, train_loader, criterion, optimizer):   
     
@@ -140,6 +147,12 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
     valid_loss_epochs = []
     valid_acc_epochs = []
 
+    valid_best_acc = 0
+    best_epoch = 0
+    best_cm = []
+    best_probs = []
+    best_preds = []
+
     lr_history = []
     
     t0 = time.time()
@@ -164,7 +177,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
   
         # Validate
         t2 = time.time()     
-        valid_loss, valid_acc, cm = validate(model, device, val_loader, criterion)
+        valid_loss, valid_acc, cm, probs, preds = validate(model, device, val_loader, criterion)
         
         valid_loss_history.extend(valid_loss)
         valid_acc_history.extend(valid_acc)
@@ -174,6 +187,14 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         
         valid_loss_epochs.append(valid_loss_mean)
         valid_acc_epochs.append(valid_acc_mean)
+
+        if valid_acc_mean > valid_best_acc:
+            valid_best_acc = valid_acc_mean
+            best_epoch = epoch
+            best_cm = cm
+            best_probs = probs
+            best_preds = preds
+            #save model here
 
         lr_history.append(scheduler.get_last_lr())  
         scheduler.step()
@@ -185,7 +206,8 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         # print('------- epoch: {:>2d}, time: {}'.format(epoch+1, format_time(time.time() - t1)))
         # print("---------------------------------------------------------")
         print('')
-        
+
+    print('[valid] best epoch {:>2d}, accuracy = {:.5f}'.format(epoch+1, valid_best_acc)) 
     print('training finished for: {}'.format(format_time(time.time() - t0)))
 
     train_info = {
@@ -198,7 +220,9 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         'valid_loss_epochs' : valid_loss_epochs,
         'valid_acc_epochs' : valid_acc_epochs,
         'lr_history' : lr_history,
-        'cm' : cm,
+        'cm' : best_cm,
+        'probs' : best_probs,
+        'preds' : best_preds,
     }
  
     return train_info
