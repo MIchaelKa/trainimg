@@ -123,7 +123,7 @@ def run_loader(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 4, 6, 8, 9], gamma=0.4)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [2, 4, 6, 8, 9], gamma=0.4)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17  
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
 
@@ -153,7 +153,7 @@ def run(
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
 
     # model = SimpleModel()
-    model = ResNetModel()
+    model = ResNetModel(pretrained=True)
     # model = EfficientNetModel()
     # model = DenseNetModel()
 
@@ -212,7 +212,7 @@ def run_cv(
 
         train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
-        model = ResNetModel()
+        model = ResNetModel(pretrained=True)
         train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, fold)
         train_infos.append(train_info)
 
@@ -256,6 +256,71 @@ def main(path_to_data, debug=False):
         }
 
     return run(**params)
+
+def inference(
+    path_to_data,
+    model_path,
+    model_name,
+    batch_size,
+    img_size
+    ):
+
+    t0 = time.time()
+
+    test_df = pd.read_csv(path_to_data + 'sample_submission.csv')
+    print(f'Dataset size: {test_df.shape}, img_size: {img_size}')
+
+    img_path = path_to_data + '/test_images/'
+    test_dataset = TestImageDataset(test_df, img_path, get_valid_transform(img_size))
+
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    device = get_device()
+
+    model = ResNetModel(pretrained=False)
+    model.load_state_dict(torch.load(model_path + model_name))
+    model.eval()
+    model.to(device)
+
+    predictions = []
+
+    with torch.no_grad():
+        for _, (x_batch) in enumerate(test_loader):
+            x_batch = x_batch.to(device)        
+            output = model(x_batch)
+            indices = torch.argmax(output, 1)
+            predictions.append(indices)
+
+    predictions = torch.cat(predictions).cpu().numpy()
+
+    test_df['label'] = predictions
+    test_df[['image_id', 'label']].to_csv('./submission.csv', index=False)
+
+    print('Inference finished for: {}'.format(format_time(time.time() - t0)))
+
+
+def inference_k_fold():
+    return 0
+
+def main_inference(
+    path_to_data,
+    model_path,
+    model_name,
+    ):
+
+    SEED = 2020
+    seed_everything(SEED)
+    print_version()
+
+    params = {
+        'path_to_data' : path_to_data,
+        'model_path'   : model_path,
+        'model_name'   : model_name,
+        'batch_size'   : 32,
+        'img_size'     : 384
+    }
+    inference(**params)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

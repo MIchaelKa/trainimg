@@ -1,20 +1,9 @@
 import numpy as np
 import torch
 
-import time
-import datetime
-
 from sklearn.metrics import confusion_matrix
 
-def format_time(elapsed):
-    '''
-    Takes a time in seconds and returns a string hh:mm:ss
-    '''
-    # Round to the nearest second.
-    elapsed_rounded = int(round((elapsed)))
-    
-    # Format as hh:mm:ss
-    return str(datetime.timedelta(seconds=elapsed_rounded))
+from utils import *
 
 def train_batch():
     return
@@ -158,11 +147,11 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
     t0 = time.time()
     
     for epoch in range(num_epochs):
-  
+
         # Train
-        t1 = time.time()     
+        t1 = time.time()
         train_loss, train_acc = train_epoch(model, device, train_loader, criterion, optimizer)
-        
+
         train_loss_history.extend(train_loss)
         train_acc_history.extend(train_acc)
         
@@ -174,7 +163,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         
         print('[train] epoch: {:>2d}, loss = {:.5f}, accuracy = {:.5f}, time: {}' \
               .format(epoch+1, train_loss_mean, train_acc_mean, format_time(time.time() - t1)))
-  
+
         # Validate
         t2 = time.time()     
         valid_loss, valid_acc, cm, probs, preds = validate(model, device, val_loader, criterion)
@@ -209,7 +198,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         # print("---------------------------------------------------------")
         print('')
 
-    print('[valid] best epoch {:>2d}, accuracy = {:.5f}'.format(best_epoch+1, valid_best_acc)) 
+    print('[valid] best epoch {:>2d}, accuracy = {:.5f}'.format(best_epoch+1, valid_best_acc))
     print('training finished for: {}'.format(format_time(time.time() - t0)))
 
     train_info = {
@@ -225,6 +214,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         'cm' : best_cm,
         'probs' : best_probs,
         'preds' : best_preds,
+        'best_acc' : valid_best_acc,
     }
  
     return train_info
