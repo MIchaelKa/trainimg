@@ -169,11 +169,14 @@ def run_cv(
     path_to_data,
     batch_size_train=32,
     batch_size_valid=32,
+    img_size=256,
     learning_rate=3e-4,
     weight_decay=1e-3,
     num_epoch=10,
     debug=False
     ):
+
+    t0 = time.time()
 
     train_df = pd.read_csv(path_to_data + 'train.csv')
     train_df = train_df.sample(frac=1).reset_index(drop=True)
@@ -207,8 +210,8 @@ def run_cv(
         # print(train_index.shape, test_index.shape)
         # print(train_index[:5], train_index[-5:], test_index[:5])
 
-        train_dataset = ImageDataset(X_train, img_path, get_train_transform())
-        valid_dataset = ImageDataset(X_valid, img_path, get_valid_transform())
+        train_dataset = ImageDataset(X_train, img_path, get_train_transform(img_size))
+        valid_dataset = ImageDataset(X_valid, img_path, get_valid_transform(img_size))
 
         train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
@@ -219,6 +222,12 @@ def run_cv(
         X_valid['probs'] = train_info['probs']
         X_valid['preds'] = train_info['preds']
         X_valid.to_csv(f'valid_df_{fold}.csv', index=False)
+
+    cv_acc = np.array([i['best_acc'] for i in train_infos])
+    print('')
+    print(f'CV results: {cv_acc}')
+    print(f'CV mean: {cv_acc.mean()}, std: {cv_acc.std()}')
+    print('CV finished for: {}'.format(format_time(time.time() - t0)))
 
     return train_infos
 
@@ -256,6 +265,36 @@ def main(path_to_data, debug=False):
         }
 
     return run(**params)
+
+def main_cv(path_to_data, debug=False):
+    SEED = 2020
+    seed_everything(SEED)
+    print_version()
+
+    if debug:
+        params = {
+        'path_to_data'     : path_to_data,
+        'batch_size_train' : 2,
+        'batch_size_valid' : 2,
+        'img_size'         : 32,
+        'learning_rate'    : 2e-4,
+        'weight_decay'     : 0, # 1e-3, 5e-4
+        'num_epoch'        : 2,
+        'debug'            : debug
+    }
+    else:
+        params = {
+        'path_to_data'     : path_to_data,
+        'batch_size_train' : 32,
+        'batch_size_valid' : 32,
+        'img_size'         : 384,
+        'learning_rate'    : 2e-4,
+        'weight_decay'     : 0, # 1e-3, 5e-4
+        'num_epoch'        : 10,
+        'debug'            : debug
+    }
+
+    return run_cv(**params)
 
 def inference(
     path_to_data,
