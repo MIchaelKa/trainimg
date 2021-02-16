@@ -338,27 +338,105 @@ def inference(
     print('Inference finished for: {}'.format(format_time(time.time() - t0)))
 
 
-def inference_k_fold():
-    return 0
+def inference_kfold(
+    path_to_data,
+    model_path,
+    model_names,
+    batch_size,
+    img_size,
+    debug,
+    ):
+
+    t0 = time.time()
+
+    if debug:
+        img_path = path_to_data + '/train_images/'
+        test_df = pd.read_csv(path_to_data + 'train.csv')
+        test_df = test_df.sample(frac=1).reset_index(drop=True).head(20)
+    else:
+        img_path = path_to_data + '/test_images/'
+        test_df = pd.read_csv(path_to_data + 'sample_submission.csv')
+    
+    print(f'Dataset size: {test_df.shape}, img_size: {img_size}')
+    test_dataset = TestImageDataset(test_df, img_path, get_valid_transform(img_size))
+
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    device = get_device()
+
+    model = ResNetModel(pretrained=False)
+    model.to(device)
+
+    predictions = []
+
+    with torch.no_grad():
+        for _, (x_batch) in enumerate(test_loader):
+            x_batch = x_batch.to(device)
+
+            ave_probs = []
+            
+            # TODO: move out of for, compare time!
+            for model_name in model_names:   
+                model.load_state_dict(torch.load(model_path + model_name))
+                model.eval()
+            
+                output = model(x_batch)
+                probs = torch.softmax(output, 1).cpu().numpy()
+                ave_probs.append(probs)
+        
+            ave_probs = np.mean(ave_probs, axis=0)
+            predictions.append(ave_probs)
+
+    predictions = np.concatenate(predictions)
+    predictions = predictions.argmax(1)
+
+    test_df['label'] = predictions
+    test_df[['image_id', 'label']].to_csv('./submission.csv', index=False)
+
+    print('Inference finished for: {}'.format(format_time(time.time() - t0)))
+
 
 def main_inference(
     path_to_data,
     model_path,
-    model_name,
+    debug,
     ):
 
     SEED = 2020
     seed_everything(SEED)
     print_version()
 
-    params = {
-        'path_to_data' : path_to_data,
-        'model_path'   : model_path,
-        'model_name'   : model_name,
-        'batch_size'   : 32,
-        'img_size'     : 384
-    }
-    inference(**params)
+    # params = {
+    #     'path_to_data' : path_to_data,
+    #     'model_path'   : model_path,
+    #     'model_name'   : model_name,
+    #     'batch_size'   : 32,
+    #     'img_size'     : 384
+    # }   
+    # inference(**params)
+
+    model_names = ['model_0.pth', 'model_1.pth', 'model_2.pth', 'model_3.pth', 'model_4.pth']
+
+    if debug:
+        params = {
+            'path_to_data' : path_to_data,
+            'model_path'   : model_path,
+            'model_names'  : model_names,
+            'batch_size'   : 4,
+            'img_size'     : 32,
+            'debug'        : debug,
+        }
+    else:
+        params = {
+            'path_to_data' : path_to_data,
+            'model_path'   : model_path,
+            'model_names'  : model_names,
+            'batch_size'   : 32,
+            'img_size'     : 384,
+            'debug'        : debug,
+        }
+
+    inference_kfold(**params)
 
 
 if __name__ == "__main__":
