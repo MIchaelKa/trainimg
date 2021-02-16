@@ -20,12 +20,17 @@ from model import *
 
 def create_datasets(
     path_to_data,
+    path_to_train,
     img_size,
     reduce_train,
     train_number,
     valid_number
     ):
-    train_df_all = pd.read_csv(path_to_data + 'train.csv')
+    if path_to_train:
+        train_df_all = pd.read_csv(path_to_train)
+    else:
+        train_df_all = pd.read_csv(path_to_data + 'train.csv')
+    
     print(f'Dataset size: {train_df_all.shape}, img_size: {img_size}')
 
     # train_df = train_df_all
@@ -135,6 +140,7 @@ def run_loader(
 
 def run(
     path_to_data='/',
+    path_to_train=None,
     batch_size_train=32,
     batch_size_valid=32,
     reduce_train=False,
@@ -146,7 +152,7 @@ def run(
     num_epoch=10
     ):
     
-    train_dataset, valid_dataset, valid_df = create_datasets(path_to_data, img_size, reduce_train, train_number, valid_number)
+    train_dataset, valid_dataset, valid_df = create_datasets(path_to_data, path_to_train, img_size, reduce_train, train_number, valid_number)
     train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
     # train_dataset = create_train_dataset(path_to_data)
@@ -232,7 +238,7 @@ def run_cv(
     return train_infos
 
 
-def main(path_to_data, debug=False):
+def main(path_to_data, path_to_train=None, debug=False):
     SEED = 2020
     seed_everything(SEED)
     print_version()
@@ -240,6 +246,7 @@ def main(path_to_data, debug=False):
     if debug:
         params = {
             'path_to_data'     : path_to_data,
+            'path_to_train'    : path_to_train,
             'batch_size_train' : 2,
             'batch_size_valid' : 2,
             'reduce_train'     : True,
@@ -253,6 +260,7 @@ def main(path_to_data, debug=False):
     else:
         params = {
             'path_to_data'     : path_to_data,
+            'path_to_train'    : path_to_train,
             'batch_size_train' : 32,
             'batch_size_valid' : 32,
             'reduce_train'     : False,
