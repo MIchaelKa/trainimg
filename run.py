@@ -304,6 +304,10 @@ def main_cv(path_to_data, debug=False):
 
     return run_cv(**params)
 
+#
+# inference
+#
+
 def inference(
     path_to_data,
     model_path,
@@ -313,6 +317,7 @@ def inference(
     ):
 
     t0 = time.time()
+    print(f'Start inference')
 
     test_df = pd.read_csv(path_to_data + 'sample_submission.csv')
     print(f'Dataset size: {test_df.shape}, img_size: {img_size}')
@@ -356,6 +361,7 @@ def inference_kfold(
     ):
 
     t0 = time.time()
+    print(f'Start inference {len(model_names)}-fold')
 
     if debug:
         img_path = path_to_data + '/train_images/'
@@ -414,38 +420,40 @@ def main_inference(
     seed_everything(SEED)
     print_version()
 
-    # params = {
-    #     'path_to_data' : path_to_data,
-    #     'model_path'   : model_path,
-    #     'model_name'   : model_name,
-    #     'batch_size'   : 32,
-    #     'img_size'     : 384
-    # }   
-    # inference(**params)
+    kfold = False
 
-    model_names = ['model_0.pth', 'model_1.pth', 'model_2.pth', 'model_3.pth', 'model_4.pth']
+    if kfold:
+        model_names = ['model_0.pth', 'model_1.pth', 'model_2.pth', 'model_3.pth', 'model_4.pth']
+        if debug:
+            params = {
+                'path_to_data' : path_to_data,
+                'model_path'   : model_path,
+                'model_names'  : model_names,
+                'batch_size'   : 4,
+                'img_size'     : 32,
+                'debug'        : debug,
+            }
+        else:
+            params = {
+                'path_to_data' : path_to_data,
+                'model_path'   : model_path,
+                'model_names'  : model_names,
+                'batch_size'   : 32,
+                'img_size'     : 384,
+                'debug'        : debug,
+            }
 
-    if debug:
-        params = {
-            'path_to_data' : path_to_data,
-            'model_path'   : model_path,
-            'model_names'  : model_names,
-            'batch_size'   : 4,
-            'img_size'     : 32,
-            'debug'        : debug,
-        }
+        inference_kfold(**params)
     else:
+        model_name = 'model_0.pth'
         params = {
             'path_to_data' : path_to_data,
             'model_path'   : model_path,
-            'model_names'  : model_names,
+            'model_name'   : model_name,
             'batch_size'   : 32,
-            'img_size'     : 384,
-            'debug'        : debug,
-        }
-
-    inference_kfold(**params)
-
+            'img_size'     : 384
+        }   
+        inference(**params)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
