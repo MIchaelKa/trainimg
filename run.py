@@ -16,7 +16,7 @@ from utils import *
 from dataset_a import *
 
 from model import *
-# from model_effnet import *
+from model_effnet import *
 
 def create_datasets(
     path_to_data,
@@ -102,6 +102,14 @@ def get_device():
 
     return device
 
+def get_model(pretrained=True):
+    # model = SimpleModel()
+    # model = ResNetModel(pretrained)
+    model = EfficientNetModel(pretrained)
+    # model = DenseNetModel()
+    return model
+
+
 def run_loader(
     model,
     train_loader,
@@ -158,10 +166,7 @@ def run(
     # train_dataset = create_train_dataset(path_to_data)
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
 
-    # model = SimpleModel()
-    model = ResNetModel(pretrained=True)
-    # model = EfficientNetModel()
-    # model = DenseNetModel()
+    model = get_model(pretrained=True)
 
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, 0)
 
@@ -226,7 +231,7 @@ def run_cv(
 
         train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
-        model = ResNetModel(pretrained=True)
+        model = get_model(pretrained=True)
         train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, fold)
         train_infos.append(train_info)
 
@@ -257,7 +262,7 @@ def main(path_to_data, path_to_train=None, debug=False):
             'reduce_train'     : True,
             'train_number'     : 10,
             'valid_number'     : 10,
-            'img_size'         : 384,
+            'img_size'         : 32,
             'learning_rate'    : 3e-4, # 1e-4
             'weight_decay'     : 0, # 1e-3, 5e-4
             'num_epoch'        : 5
@@ -336,7 +341,7 @@ def inference(
 
     device = get_device()
 
-    model = ResNetModel(pretrained=False)
+    model = get_model(pretrained=False)
     model.load_state_dict(torch.load(model_path + model_name))
     model.eval()
     model.to(device)
@@ -385,7 +390,7 @@ def inference_kfold(
 
     device = get_device()
 
-    model = ResNetModel(pretrained=False)
+    model = get_model(pretrained=False)
     model.to(device)
 
     predictions = []
@@ -427,7 +432,7 @@ def main_inference(
     seed_everything(SEED)
     print_version()
 
-    kfold = False
+    kfold = True
 
     if kfold:
         model_names = ['model_0.pth', 'model_1.pth', 'model_2.pth', 'model_3.pth', 'model_4.pth']

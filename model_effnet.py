@@ -4,11 +4,17 @@ import torch.nn as nn
 from efficientnet_pytorch import EfficientNet
 
 class EfficientNetModel(nn.Module):
-    def __init__(self):
+    def __init__(self, pretrained=False):
         super().__init__()
-        print('Init efficientnet-b0')
 
-        self.backbone = EfficientNet.from_pretrained('efficientnet-b0')
+        model_name = 'efficientnet-b4'
+        print(f'Init {model_name}, pretrained: {pretrained}')
+
+        if pretrained:
+            self.backbone = EfficientNet.from_pretrained(model_name)
+        else:
+            self.backbone = EfficientNet.from_name(model_name)
+
         self.fc = nn.Linear(self.backbone._fc.in_features, 5)     
         self.backbone._fc = nn.Identity()
         
