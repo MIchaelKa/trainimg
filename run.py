@@ -103,11 +103,16 @@ def get_device():
     return device
 
 def get_model(model_name, pretrained=True):
+
     # model = SimpleModel()
     # model = ResNetModel(pretrained)
     model = EfficientNetModel(model_name, pretrained)
     # model = DenseNetModel()
     return model
+
+def get_model_name():
+    model_name = 'efficientnet-b2'
+    return model_name
 
 
 def run_loader(
@@ -248,10 +253,6 @@ def run_cv(
 
     return train_infos
 
-def get_model_name():
-    model_name = 'efficientnet-b2'
-    return model_name
-
 def main(path_to_data, path_to_train=None, debug=False):
     SEED = 2020
     seed_everything(SEED)
@@ -329,28 +330,21 @@ def main_cv(path_to_data, path_to_train=None, debug=False):
 #
 
 def inference(
-    path_to_data,
+    test_dataset,
     model_path,
-    model_name,
+    model,
     model_state,
     batch_size,
-    img_size
+    debug,
     ):
 
     t0 = time.time()
     print(f'Start inference')
 
-    test_df = pd.read_csv(path_to_data + 'sample_submission.csv')
-    print(f'Dataset size: {test_df.shape}, img_size: {img_size}')
-
-    img_path = path_to_data + '/test_images/'
-    test_dataset = TestImageDataset(test_df, img_path, get_valid_transform(img_size))
-
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     device = get_device()
 
-    model = get_model(model_name, pretrained=False)
     model.load_state_dict(torch.load(model_path + model_state))
     model.eval()
     model.to(device)
@@ -361,46 +355,31 @@ def inference(
         for _, (x_batch) in enumerate(test_loader):
             x_batch = x_batch.to(device)        
             output = model(x_batch)
-            indices = torch.argmax(output, 1)
-            predictions.append(indices)
+            probs = torch.softmax(output, 1).cpu().numpy()
+            predictions.append(probs)
 
-    predictions = torch.cat(predictions).cpu().numpy()
-
-    test_df['label'] = predictions
-    test_df[['image_id', 'label']].to_csv('./submission.csv', index=False)
+    predictions = np.concatenate(predictions)
 
     print('Inference finished for: {}'.format(format_time(time.time() - t0)))
+    return predictions
 
 
 def inference_kfold(
-    path_to_data,
+    test_dataset,
     model_path,
-    model_name,
+    model,
     model_states,
     batch_size,
-    img_size,
     debug,
     ):
 
     t0 = time.time()
     print(f'Start inference {len(model_states)}-fold')
 
-    if debug:
-        img_path = path_to_data + '/train_images/'
-        test_df = pd.read_csv(path_to_data + 'train.csv')
-        test_df = test_df.sample(frac=1).reset_index(drop=True).head(20)
-    else:
-        img_path = path_to_data + '/test_images/'
-        test_df = pd.read_csv(path_to_data + 'sample_submission.csv')
-    
-    print(f'Dataset size: {test_df.shape}, img_size: {img_size}')
-    test_dataset = TestImageDataset(test_df, img_path, get_valid_transform(img_size))
-
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     device = get_device()
 
-    model = get_model(model_name, pretrained=False)
     model.to(device)
 
     predictions = []
@@ -424,17 +403,15 @@ def inference_kfold(
             predictions.append(ave_probs)
 
     predictions = np.concatenate(predictions)
-    predictions = predictions.argmax(1)
-
-    test_df['label'] = predictions
-    test_df[['image_id', 'label']].to_csv('./submission.csv', index=False)
 
     print('Inference finished for: {}'.format(format_time(time.time() - t0)))
+    return predictions
 
 
 def main_inference(
     path_to_data,
     model_path,
+    model_path_2,
     debug,
     ):
 
@@ -442,44 +419,82 @@ def main_inference(
     seed_everything(SEED)
     print_version()
 
-    kfold = False
-    model_name = get_model_name()
+    if debug:
+        img_path = path_to_data + '/train_images/'
+        img_size = 32
 
-    if kfold:
-        model_states = ['model_0.pth', 'model_1.pth', 'model_2.pth', 'model_3.pth', 'model_4.pth']
-        if debug:
-            params = {
-                'path_to_data' : path_to_data,
-                'model_path'   : model_path,
-                'model_names'  : model_names,
-                'model_states' : model_states,
-                'batch_size'   : 4,
-                'img_size'     : 32,
-                'debug'        : debug,
-            }
-        else:
-            params = {
-                'path_to_data' : path_to_data,
-                'model_path'   : model_path,
-                'model_names'  : model_names,
-                'model_states' : model_states,
-                'batch_size'   : 32,
-                'img_size'     : 384,
-                'debug'        : debug,
-            }
-
-        inference_kfold(**params)
+        test_df = pd.read_csv(path_to_data + 'train.csv')
+        test_df = test_df.sample(frac=1).reset_index(drop=True).head(20)
     else:
-        model_state = 'model_0.pth'
+        img_path = path_to_data + '/test_images/'
+        img_size = 384
+
+        test_df = pd.read_csv(path_to_data + 'sample_submission.csv')
+    
+    print(f'Dataset size: {test_df.shape}, img_size: {img_size}')
+    test_dataset = TestImageDataset(test_df, img_path, get_valid_transform(img_size))
+
+    #
+    # ResNetModel
+    #
+
+    model = ResNetModel(pretrained=False)
+    model_states = ['model_0.pth', 'model_1.pth', 'model_2.pth', 'model_3.pth', 'model_4.pth']
+
+    if debug:
         params = {
-            'path_to_data' : path_to_data,
+            'test_dataset' : test_dataset,
             'model_path'   : model_path,
-            'model_name'   : model_name,
+            'model'        : model,
+            'model_states' : model_states,
+            'batch_size'   : 4,
+            'debug'        : debug,
+        }
+    else:
+        params = {
+            'test_dataset' : test_dataset,
+            'model_path'   : model_path,
+            'model'        : model,
+            'model_states' : model_states,
+            'batch_size'   : 32,
+            'debug'        : debug,
+        }
+
+    preds_1 = inference_kfold(**params)
+
+    #
+    # EfficientNetModel
+    #
+
+    model = EfficientNetModel('efficientnet-b2', pretrained=False)
+    model_state = 'model_0.pth'
+
+    if debug:
+        params = {
+            'test_dataset' : test_dataset,
+            'model_path'   : model_path_2,
+            'model'        : model,
+            'model_state'  : model_state,
+            'batch_size'   : 4,
+            'debug'        : debug,
+        }
+    else:
+        params = {
+            'test_dataset' : test_dataset,
+            'model_path'   : model_path_2,
+            'model'        : model,
             'model_state'  : model_state,
             'batch_size'   : 32,
-            'img_size'     : 384
-        }   
-        inference(**params)
+            'debug'        : debug,
+        }
+   
+    preds_2 = inference(**params)
+
+    predictions = 0.6 * preds_1 + 0.4 * preds_2
+    predictions = predictions.argmax(1)
+        
+    test_df['label'] = predictions
+    test_df[['image_id', 'label']].to_csv('./submission.csv', index=False)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
