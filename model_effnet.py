@@ -4,10 +4,9 @@ import torch.nn as nn
 from efficientnet_pytorch import EfficientNet
 
 class EfficientNetModel(nn.Module):
-    def __init__(self, pretrained=False):
+    def __init__(self, model_name, pretrained=False):
         super().__init__()
 
-        model_name = 'efficientnet-b4'
         print(f'Init {model_name}, pretrained: {pretrained}')
 
         if pretrained:

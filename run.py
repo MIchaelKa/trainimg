@@ -102,10 +102,10 @@ def get_device():
 
     return device
 
-def get_model(pretrained=True):
+def get_model(model_name, pretrained=True):
     # model = SimpleModel()
     # model = ResNetModel(pretrained)
-    model = EfficientNetModel(pretrained)
+    model = EfficientNetModel(model_name, pretrained)
     # model = DenseNetModel()
     return model
 
@@ -149,6 +149,7 @@ def run_loader(
 def run(
     path_to_data='/',
     path_to_train=None,
+    model_name='',
     batch_size_train=32,
     batch_size_valid=32,
     reduce_train=False,
@@ -166,7 +167,7 @@ def run(
     # train_dataset = create_train_dataset(path_to_data)
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
 
-    model = get_model(pretrained=True)
+    model = get_model(model_name, pretrained=True)
 
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, 0)
 
@@ -253,10 +254,13 @@ def main(path_to_data, path_to_train=None, debug=False):
     seed_everything(SEED)
     print_version()
 
+    model_name = 'efficientnet-b3'
+
     if debug:
         params = {
             'path_to_data'     : path_to_data,
             'path_to_train'    : path_to_train,
+            'model_name'       : model_name,
             'batch_size_train' : 2,
             'batch_size_valid' : 2,
             'reduce_train'     : True,
@@ -271,6 +275,7 @@ def main(path_to_data, path_to_train=None, debug=False):
         params = {
             'path_to_data'     : path_to_data,
             'path_to_train'    : path_to_train,
+            'model_name'       : model_name,
             'batch_size_train' : 32,
             'batch_size_valid' : 32,
             'reduce_train'     : False,
