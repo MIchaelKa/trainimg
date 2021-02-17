@@ -7,11 +7,10 @@ import datetime
 
 major_version = 1
 minor_version = 4
-version = 4
+version = 5
 
 def print_version():
     print(f'Version: {major_version}.{minor_version}.{version}')
-
 
 def seed_everything(seed):
     random.seed(seed)

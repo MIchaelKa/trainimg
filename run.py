@@ -173,6 +173,7 @@ def run(
 
 def run_cv(
     path_to_data,
+    path_to_train=None,
     batch_size_train=32,
     batch_size_valid=32,
     img_size=256,
@@ -184,7 +185,11 @@ def run_cv(
 
     t0 = time.time()
 
-    train_df = pd.read_csv(path_to_data + 'train.csv')
+    if path_to_train:
+        train_df = pd.read_csv(path_to_train)
+    else:
+        train_df = pd.read_csv(path_to_data + 'train.csv')
+
     train_df = train_df.sample(frac=1).reset_index(drop=True)
     # train_df = train_df.sort_values('label').reset_index(drop=True)
     if debug:
@@ -274,7 +279,7 @@ def main(path_to_data, path_to_train=None, debug=False):
 
     return run(**params)
 
-def main_cv(path_to_data, debug=False):
+def main_cv(path_to_data, path_to_train=None, debug=False):
     SEED = 2020
     seed_everything(SEED)
     print_version()
@@ -282,6 +287,7 @@ def main_cv(path_to_data, debug=False):
     if debug:
         params = {
         'path_to_data'     : path_to_data,
+        'path_to_train'    : path_to_train,
         'batch_size_train' : 2,
         'batch_size_valid' : 2,
         'img_size'         : 32,
@@ -293,6 +299,7 @@ def main_cv(path_to_data, debug=False):
     else:
         params = {
         'path_to_data'     : path_to_data,
+        'path_to_train'    : path_to_train,
         'batch_size_train' : 32,
         'batch_size_valid' : 32,
         'img_size'         : 384,
