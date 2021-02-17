@@ -248,13 +248,16 @@ def run_cv(
 
     return train_infos
 
+def get_model_name():
+    model_name = 'efficientnet-b2'
+    return model_name
 
 def main(path_to_data, path_to_train=None, debug=False):
     SEED = 2020
     seed_everything(SEED)
     print_version()
 
-    model_name = 'efficientnet-b3'
+    model_name = get_model_name()
 
     if debug:
         params = {
@@ -329,6 +332,7 @@ def inference(
     path_to_data,
     model_path,
     model_name,
+    model_state,
     batch_size,
     img_size
     ):
@@ -346,8 +350,8 @@ def inference(
 
     device = get_device()
 
-    model = get_model(pretrained=False)
-    model.load_state_dict(torch.load(model_path + model_name))
+    model = get_model(model_name, pretrained=False)
+    model.load_state_dict(torch.load(model_path + model_state))
     model.eval()
     model.to(device)
 
@@ -371,14 +375,15 @@ def inference(
 def inference_kfold(
     path_to_data,
     model_path,
-    model_names,
+    model_name,
+    model_states,
     batch_size,
     img_size,
     debug,
     ):
 
     t0 = time.time()
-    print(f'Start inference {len(model_names)}-fold')
+    print(f'Start inference {len(model_states)}-fold')
 
     if debug:
         img_path = path_to_data + '/train_images/'
@@ -395,7 +400,7 @@ def inference_kfold(
 
     device = get_device()
 
-    model = get_model(pretrained=False)
+    model = get_model(model_name, pretrained=False)
     model.to(device)
 
     predictions = []
@@ -407,8 +412,8 @@ def inference_kfold(
             ave_probs = []
             
             # TODO: move out of for, compare time!
-            for model_name in model_names:   
-                model.load_state_dict(torch.load(model_path + model_name))
+            for model_state in model_states:   
+                model.load_state_dict(torch.load(model_path + model_state))
                 model.eval()
             
                 output = model(x_batch)
@@ -437,15 +442,17 @@ def main_inference(
     seed_everything(SEED)
     print_version()
 
-    kfold = True
+    kfold = False
+    model_name = get_model_name()
 
     if kfold:
-        model_names = ['model_0.pth', 'model_1.pth', 'model_2.pth', 'model_3.pth', 'model_4.pth']
+        model_states = ['model_0.pth', 'model_1.pth', 'model_2.pth', 'model_3.pth', 'model_4.pth']
         if debug:
             params = {
                 'path_to_data' : path_to_data,
                 'model_path'   : model_path,
                 'model_names'  : model_names,
+                'model_states' : model_states,
                 'batch_size'   : 4,
                 'img_size'     : 32,
                 'debug'        : debug,
@@ -455,6 +462,7 @@ def main_inference(
                 'path_to_data' : path_to_data,
                 'model_path'   : model_path,
                 'model_names'  : model_names,
+                'model_states' : model_states,
                 'batch_size'   : 32,
                 'img_size'     : 384,
                 'debug'        : debug,
@@ -462,11 +470,12 @@ def main_inference(
 
         inference_kfold(**params)
     else:
-        model_name = 'model_0.pth'
+        model_state = 'model_0.pth'
         params = {
             'path_to_data' : path_to_data,
             'model_path'   : model_path,
             'model_name'   : model_name,
+            'model_state'  : model_state,
             'batch_size'   : 32,
             'img_size'     : 384
         }   
