@@ -7,18 +7,18 @@ from torchvision import transforms as T
 # Use mean and std for pretrained models
 # https://pytorch.org/docs/stable/torchvision/models.html
 
-def get_train_transform():
+def get_train_transform(img_size):
     transform = T.Compose([
-        T.Resize((256, 256)),
+        T.Resize((img_size, img_size)),
         T.ToTensor(),
         # T.Normalize(mean=[0.485, 0.456, 0.406],
         #             std=[0.229, 0.224, 0.225])
     ])
     return transform
 
-def get_valid_transform():
+def get_valid_transform(img_size):
     transform = T.Compose([
-        T.Resize((256, 256)),
+        T.Resize((img_size, img_size)),
         T.ToTensor(),
         # T.Normalize(mean=[0.485, 0.456, 0.406],
         #             std=[0.229, 0.224, 0.225])
@@ -31,16 +31,18 @@ class ImageDataset(Dataset):
         self.df = df
         self.path = path
         self.transform = transform
+
+        self.target_columns = df.columns[1:-1]
         
     def __len__(self):
         return self.df.shape[0]
     
     def __getitem__(self, index):
         row = self.df.iloc[index]
-        image_id = row.image_id
-        label = row.label
+        image_id = row.StudyInstanceUID
+        label = row[self.target_columns].values.astype(float)
         
-        image = Image.open(self.path+image_id)
+        image = Image.open(self.path+image_id+'.jpg')
         
         if self.transform:
             image = self.transform(image)

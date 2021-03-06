@@ -12,11 +12,11 @@ import argparse
 from train import *
 from utils import *
 
-# from dataset import *
-from dataset_a import *
+from dataset import *
+# from dataset_a import *
 
 from model import *
-from model_effnet import *
+# from model_effnet import *
 
 def create_datasets(
     path_to_data,
@@ -44,7 +44,7 @@ def create_datasets(
         valid_df = valid_df.sample(frac=1).reset_index(drop=True).head(valid_number)
         print(f'Reduce dataset size, train: {len(train_df)}, valid: {len(valid_df)}')
 
-    img_path = path_to_data + '/train_images/'
+    img_path = path_to_data + 'train/'
 
     train_dataset = ImageDataset(train_df, img_path, get_train_transform(img_size))
     valid_dataset = ImageDataset(valid_df, img_path, get_valid_transform(img_size))
@@ -55,7 +55,7 @@ def create_train_dataset(path_to_data, img_size):
     train_df_all = pd.read_csv(path_to_data + 'train.csv')
     print(f'Dataset size: {train_df_all.shape}')
 
-    img_path = path_to_data + '/train_images/'
+    img_path = path_to_data + 'train/'
 
     train_dataset = ImageDataset(train_df_all, img_path, get_train_transform(img_size))
 
@@ -105,8 +105,8 @@ def get_device():
 def get_model(model_name, pretrained=True):
 
     # model = SimpleModel()
-    # model = ResNetModel(pretrained)
-    model = EfficientNetModel(model_name, pretrained)
+    model = ResNetModel(pretrained)
+    # model = EfficientNetModel(model_name, pretrained)
     # model = DenseNetModel()
     return model
 
@@ -137,13 +137,14 @@ def run_loader(
 
     model.to(device)
 
-    loss = nn.CrossEntropyLoss()
+    # loss = nn.CrossEntropyLoss()
+    loss = nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [2, 4, 6, 8, 9], gamma=0.4)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [2, 4, 6, 8, 9], gamma=0.4)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17  
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
 
     print('')
     print('Start training...')
@@ -175,10 +176,6 @@ def run(
     model = get_model(model_name, pretrained=True)
 
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, 0)
-
-    valid_df['probs'] = train_info['probs']
-    valid_df['preds'] = train_info['preds']
-    valid_df.to_csv('valid_df.csv', index=False)
 
     return train_info, model
 
@@ -270,7 +267,7 @@ def main(path_to_data, path_to_train=None, debug=False):
             'reduce_train'     : True,
             'train_number'     : 10,
             'valid_number'     : 10,
-            'img_size'         : 32,
+            'img_size'         : 256,
             'learning_rate'    : 3e-4, # 1e-4
             'weight_decay'     : 0, # 1e-3, 5e-4
             'num_epoch'        : 5
@@ -282,13 +279,13 @@ def main(path_to_data, path_to_train=None, debug=False):
             'model_name'       : model_name,
             'batch_size_train' : 32,
             'batch_size_valid' : 32,
-            'reduce_train'     : False,
+            'reduce_train'     : True,
             'train_number'     : 12000,
             'valid_number'     : 1000,
-            'img_size'         : 384,
-            'learning_rate'    : 2e-4,
+            'img_size'         : 256,
+            'learning_rate'    : 3e-4,
             'weight_decay'     : 0, # 1e-3, 5e-4
-            'num_epoch'        : 10
+            'num_epoch'        : 5
         }
 
     return run(**params)

@@ -5,9 +5,9 @@ import os
 import time
 import datetime
 
-major_version = 1
-minor_version = 4
-version = 9
+major_version = 2
+minor_version = 0
+version = 1
 
 def print_version():
     print(f'Version: {major_version}.{minor_version}.{version}')

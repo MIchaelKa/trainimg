@@ -30,14 +30,15 @@ class DenseNetModel(nn.Module):
 class ResNetModel(nn.Module):
     def __init__(self, pretrained=False):
         super().__init__()
-        print('Init resnext50_32x4d')
-        # resnet = models.resnet18(pretrained=True)
+        print('Init resnet18')
+        resnet = models.resnet18(pretrained=True)
+        resnet.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         # resnet = models.resnet34(pretrained=True)
-        resnet = models.resnext50_32x4d(pretrained=pretrained)
+        # resnet = models.resnext50_32x4d(pretrained=pretrained)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
 
         in_features = resnet.fc.in_features  
-        self.fc = nn.Linear(in_features, 5)
+        self.fc = nn.Linear(in_features, 11)
         
     def forward(self, x):
         
@@ -50,9 +51,10 @@ class ResNetModel(nn.Module):
 class SimpleModel(nn.Module):
     def __init__(self):
         super().__init__()
+        print('Init SimpleModel')
 
         self.backbone = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=2, bias=False),
+            nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=2, bias=False),
             nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
@@ -63,7 +65,7 @@ class SimpleModel(nn.Module):
             nn.MaxPool2d(2),
         )
         
-        self.fc = nn.Linear(256*8*8, 5)
+        self.fc = nn.Linear(256*8*8, 11)
         
     def forward(self, x):
         
