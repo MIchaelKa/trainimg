@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, confusion_matrix
 
 class RocAucMeter(object):
     def __init__(self, num_classes):
@@ -27,3 +27,6 @@ class RocAucMeter(object):
 
     def compute_score(self):
         return [roc_auc_score(self.y_true[:,i], self.y_pred[:,i]) for i in range(self.num_classes)]
+
+    def compute_cm(self):
+        return [confusion_matrix(self.y_true[:,i], (self.y_pred[:,i] > 0.5).astype(float)) for i in range(self.num_classes)]

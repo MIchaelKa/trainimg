@@ -1,8 +1,6 @@
 import numpy as np
 import torch
 
-from sklearn.metrics import confusion_matrix
-
 from utils import *
 from metrics import RocAucMeter
 
@@ -34,10 +32,12 @@ def validate(model, device, val_loader, criterion):
             # Compute score
             meter.update(y_batch, output)
 
-    valid_score_total = np.mean(meter.compute_score())
+    valid_scores = meter.compute_score()
+    valid_cms = meter.compute_cm()
+
     # print('[valid] -------------------------- score = {:.5f}'.format(valid_score_total))
     
-    return loss_history, valid_score_total
+    return loss_history, valid_scores, valid_cms
 
 def train_epoch(model, device, train_loader, criterion, optimizer):   
     
@@ -105,6 +105,8 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
     valid_best_score = 0
     best_epoch = 0
+    best_scores = []
+    best_cms = []
 
     lr_history = []
     
@@ -129,18 +131,21 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
         # Validate
         t2 = time.time()     
-        valid_loss, valid_score = validate(model, device, val_loader, criterion)
+        valid_loss, valid_scores, valid_cms = validate(model, device, val_loader, criterion)
         
         valid_loss_history.extend(valid_loss)
         
         valid_loss_mean = np.mean(valid_loss)
+        valid_score_mean = np.mean(valid_scores)
         
         valid_loss_epochs.append(valid_loss_mean)
-        valid_score_epochs.append(valid_score)
+        valid_score_epochs.append(valid_score_mean)
 
-        if valid_score > valid_best_score:
-            valid_best_score = valid_score
+        if valid_score_mean > valid_best_score:
+            valid_best_score = valid_score_mean
             best_epoch = epoch
+            best_scores = valid_scores
+            best_cms = valid_cms
 
             #save model
             # torch.save(model.state_dict(), f'model_{fold}.pth')
@@ -149,7 +154,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         scheduler.step()
              
         print('[valid] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
-              .format(epoch+1, valid_loss_mean, valid_score, format_time(time.time() - t1)))
+              .format(epoch+1, valid_loss_mean, valid_score_mean, format_time(time.time() - t1)))
         
         # Epoch
         # print('------- epoch: {:>2d}, time: {}'.format(epoch+1, format_time(time.time() - t1)))
@@ -169,7 +174,8 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         'valid_loss_epochs' : valid_loss_epochs,
         'valid_score_epochs' : valid_score_epochs,
         'lr_history' : lr_history,
-        'best_score' : valid_best_score,
+        'best_scores' : best_scores,
+        'best_cms' : best_cms,
     }
  
     return train_info

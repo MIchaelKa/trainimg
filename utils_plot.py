@@ -50,7 +50,7 @@ def show_dataset_grid(dataset):
     
     for i, ax in enumerate(axes):
         image, label = dataset[i]
-        plt.imshow(dataset.get_image_to_show(image))
+        ax.imshow(dataset.get_image_to_show(image))
         ax.set_title(f'Label: {label}\nShape: {np.array(image).shape}', fontsize=16)
         ax.axis('off')
     plt.tight_layout()
@@ -111,3 +111,29 @@ def show_confusion_matrix(confusion_matrix):
     plt.ylabel("Predicted")
     plt.xlabel("Target")
     plt.show()
+    
+def show_cms(train_info):
+    nrow, ncol = 4, 3
+    size = 5
+    fig, axes = plt.subplots(nrow, ncol, figsize=(ncol*size, nrow*size))
+    fig.suptitle('Confusion matrices')
+
+    axes = axes.flatten()
+
+    for i, cm in enumerate(train_info['best_cms']):
+        ax = axes[i]
+        score = train_info['best_scores'][i]
+        column = train_info['target_columns'][i]
+        ax.set_title(f'{column}\nScore: {score:.5f}', fontsize=15)
+        sns.heatmap(
+            cm,
+            cmap="GnBu",
+            fmt="d",
+            linewidths=1.5,
+            annot=True,
+            ax=ax
+        )   
+        ax.set_ylabel("Predicted")
+        ax.set_xlabel("Target")
+
+    fig.tight_layout(pad=3.0)

@@ -176,6 +176,7 @@ def run(
     model = get_model(model_name, pretrained=True)
 
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, 0)
+    train_info['target_columns'] = train_dataset.target_columns
 
     return train_info, model
 
