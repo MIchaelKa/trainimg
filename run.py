@@ -279,13 +279,13 @@ def main(path_to_data, path_to_train=None, debug=False):
             'model_name'       : model_name,
             'batch_size_train' : 32,
             'batch_size_valid' : 32,
-            'reduce_train'     : True,
+            'reduce_train'     : False,
             'train_number'     : 12000,
             'valid_number'     : 1000,
             'img_size'         : 256,
-            'learning_rate'    : 3e-4,
+            'learning_rate'    : 2e-4,
             'weight_decay'     : 0, # 1e-3, 5e-4
-            'num_epoch'        : 5
+            'num_epoch'        : 3
         }
 
     return run(**params)
