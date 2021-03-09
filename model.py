@@ -33,11 +33,12 @@ class ResNetModel(nn.Module):
     def __init__(self, model_name, pretrained=False):
         super().__init__()
         print(f'Init torchvision {model_name}, pretrained: {pretrained}')
-        resnet = {
-            'resnet18': models.resnet18(pretrained=pretrained),
-            'resnet34': models.resnet34(pretrained=pretrained),
-            'resnext50_32x4d': models.resnext50_32x4d(pretrained=pretrained),
+        model_func = {
+            'resnet18': models.resnet18,
+            'resnet34': models.resnet34,
+            'resnext50_32x4d': models.resnext50_32x4d,
         }[model_name]
+        resnet = model_func(pretrained=pretrained)
         resnet.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
 

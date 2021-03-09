@@ -52,13 +52,22 @@ def create_datasets(
 
     return train_dataset, valid_dataset, valid_df
 
-def create_train_dataset(path_to_data, img_size):
-    train_df_all = pd.read_csv(path_to_data + 'train.csv')
-    print(f'Dataset size: {train_df_all.shape}')
+def create_train_dataset(
+    path_to_data,
+    img_size,
+    reduce_train=False,
+    train_number=200
+    ):
+    train_df = pd.read_csv(path_to_data + 'train.csv')
+    print(f'Dataset size: {train_df.shape}')
+
+    if reduce_train:
+        train_df = train_df.sample(frac=1).reset_index(drop=True).head(train_number)
+        print(f'Reduce dataset size: {len(train_df)}')
 
     img_path = path_to_data + 'train/'
 
-    train_dataset = ImageDataset(train_df_all, img_path, get_train_transform(img_size))
+    train_dataset = ImageDataset(train_df, img_path, get_train_transform(img_size))
 
     return train_dataset
 
@@ -292,7 +301,7 @@ def main(path_to_data, path_to_train=None, debug=False):
             'train_number'     : 12000,
             'valid_number'     : 1000,
             'img_size'         : 256,
-            'learning_rate'    : 2e-4,
+            'learning_rate'    : 1e-4,
             'weight_decay'     : 0, # 1e-3, 5e-4
             'num_epoch'        : 3
         }

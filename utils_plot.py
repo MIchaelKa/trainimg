@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import math 
 
 # sns.set()
 
@@ -117,7 +118,7 @@ def show_confusion_matrix(confusion_matrix):
 def show_cms(train_info):
     cm_number = len(train_info['best_cms'])
     ncol = 3
-    nrow = int(cm_number / 3)
+    nrow = math.ceil(cm_number / 3)
     size = 5
     fig, axes = plt.subplots(nrow, ncol, figsize=(ncol*size, nrow*size))
     fig.suptitle('Confusion matrices')

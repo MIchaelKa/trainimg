@@ -32,22 +32,22 @@ class ImageDataset(Dataset):
         self.path = path
         self.transform = transform
 
-        # self.target_columns = df.columns[1:-1]
-
         self.target_columns = [
-            # 'ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
-            # 'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal',
+            'ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
+            'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal',
             'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal',
-            # 'Swan Ganz Catheter Present'
+            'Swan Ganz Catheter Present'
         ]
+
+        self.image_ids = df.StudyInstanceUID
+        self.labels = df[self.target_columns]
         
     def __len__(self):
         return self.df.shape[0]
     
     def __getitem__(self, index):
-        row = self.df.iloc[index]
-        image_id = row.StudyInstanceUID
-        label = row[self.target_columns].values.astype(float)
+        image_id = self.image_ids.iloc[0]
+        label = self.labels.iloc[0].values.astype(float)
         
         image = Image.open(self.path+image_id+'.jpg')
         
