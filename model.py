@@ -4,6 +4,8 @@ import torch.nn as nn
 from torchvision import models
 import torch.nn.functional as F
 
+from config import GlobalConfig
+
 class DenseNetModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -28,17 +30,19 @@ class DenseNetModel(nn.Module):
         return x
 
 class ResNetModel(nn.Module):
-    def __init__(self, pretrained=False):
+    def __init__(self, model_name, pretrained=False):
         super().__init__()
-        print('Init resnet18')
-        resnet = models.resnet18(pretrained=True)
+        print(f'Init torchvision {model_name}, pretrained: {pretrained}')
+        resnet = {
+            'resnet18': models.resnet18(pretrained=pretrained),
+            'resnet34': models.resnet34(pretrained=pretrained),
+            'resnext50_32x4d': models.resnext50_32x4d(pretrained=pretrained),
+        }[model_name]
         resnet.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-        # resnet = models.resnet34(pretrained=True)
-        # resnet = models.resnext50_32x4d(pretrained=pretrained)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
 
         in_features = resnet.fc.in_features  
-        self.fc = nn.Linear(in_features, 11)
+        self.fc = nn.Linear(in_features, GlobalConfig.target_size)
         
     def forward(self, x):
         

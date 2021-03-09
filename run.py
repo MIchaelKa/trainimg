@@ -16,6 +16,7 @@ from dataset import *
 # from dataset_a import *
 
 from model import *
+# from model_timm import *
 # from model_effnet import *
 
 def create_datasets(
@@ -104,14 +105,19 @@ def get_device():
 
 def get_model(model_name, pretrained=True):
 
+    # model = CustomResNet(model_name, pretrained)
+
     # model = SimpleModel()
-    model = ResNetModel(pretrained)
+    model = ResNetModel(model_name, pretrained)
     # model = EfficientNetModel(model_name, pretrained)
     # model = DenseNetModel()
     return model
 
+# TODO: move to model_*.py ???
 def get_model_name():
-    model_name = 'efficientnet-b2'
+    # model_name = 'efficientnet-b2'
+    # model_name = 'resnet200d' # 'resnet50d', 'resnet101d', 'resnet200d'
+    model_name = 'resnet18' #'resnet18', 'resnext50d_32x4d'
     return model_name
 
 
@@ -138,7 +144,7 @@ def run_loader(
     model.to(device)
 
     # loss = nn.CrossEntropyLoss()
-    pos_weight = torch.tensor([1,1,1,1,1,1,1,1,1,3,1]).to(device)
+    pos_weight = torch.tensor([1,1,1,1,1,1,1,1.1,1.1,0.9,1]).to(device)
     loss = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)

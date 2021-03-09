@@ -110,8 +110,8 @@ def show_confusion_matrix(confusion_matrix):
     )
 
     plt.yticks(rotation=0)
-    plt.ylabel("Predicted")
-    plt.xlabel("Target")
+    plt.xlabel("Predicted")
+    plt.ylabel("Target")
     plt.show()
     
 def show_cms(train_info):
@@ -135,7 +135,7 @@ def show_cms(train_info):
             annot=True,
             ax=ax
         )   
-        ax.set_ylabel("Predicted")
-        ax.set_xlabel("Target")
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("Target")
 
     fig.tight_layout(pad=3.0)
