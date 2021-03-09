@@ -138,7 +138,8 @@ def run_loader(
     model.to(device)
 
     # loss = nn.CrossEntropyLoss()
-    loss = nn.BCEWithLogitsLoss()
+    pos_weight = torch.tensor([1,1,1,1,1,1,1,1,0.3,0.3,3])
+    loss = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 

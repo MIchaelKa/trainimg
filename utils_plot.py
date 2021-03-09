@@ -95,6 +95,8 @@ def show_conv_weight(conv):
     plt.tight_layout()
     plt.show()
 
+# TODO: try
+# from sklearn.metrics import plot_confusion_matrix
 def show_confusion_matrix(confusion_matrix):
     # plt.figure(figsize=(7,7))
     plt.title("Confusion matrix")
