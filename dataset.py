@@ -46,8 +46,8 @@ class ImageDataset(Dataset):
         return self.df.shape[0]
     
     def __getitem__(self, index):
-        image_id = self.image_ids.iloc[0]
-        label = self.labels.iloc[0].values.astype(float)
+        image_id = self.image_ids.iloc[index]
+        label = self.labels.iloc[index].values.astype(float)
         
         image = Image.open(self.path+image_id+'.jpg')
         
