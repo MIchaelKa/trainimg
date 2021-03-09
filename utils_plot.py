@@ -115,7 +115,9 @@ def show_confusion_matrix(confusion_matrix):
     plt.show()
     
 def show_cms(train_info):
-    nrow, ncol = 4, 3
+    cm_number = len(train_info['best_cms'])
+    ncol = 3
+    nrow = int(cm_number / 3)
     size = 5
     fig, axes = plt.subplots(nrow, ncol, figsize=(ncol*size, nrow*size))
     fig.suptitle('Confusion matrices')

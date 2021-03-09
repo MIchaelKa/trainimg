@@ -1,3 +1,3 @@
 
 class GlobalConfig:
-    target_size=11
+    target_size=3

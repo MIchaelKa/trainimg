@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from utils import *
+from config import GlobalConfig
 from metrics import RocAucMeter
 
 def train_batch():
@@ -15,7 +16,7 @@ def validate(model, device, val_loader, criterion):
     model.eval()
     
     loss_history = []
-    meter = RocAucMeter(11)
+    meter = RocAucMeter(GlobalConfig.target_size)
 
     with torch.no_grad():
         for _, (x_batch, y_batch) in enumerate(val_loader):
@@ -48,7 +49,7 @@ def train_epoch(model, device, train_loader, criterion, optimizer):
   
     loss_accum = 0
 
-    meter = RocAucMeter(11)
+    meter = RocAucMeter(GlobalConfig.target_size)
 
     print_every = int(len(train_loader) / 5)
     print_every = 1 if print_every == 0 else print_every

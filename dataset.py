@@ -32,7 +32,14 @@ class ImageDataset(Dataset):
         self.path = path
         self.transform = transform
 
-        self.target_columns = df.columns[1:-1]
+        # self.target_columns = df.columns[1:-1]
+
+        self.target_columns = [
+            # 'ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
+            # 'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal',
+            'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal',
+            # 'Swan Ganz Catheter Present'
+        ]
         
     def __len__(self):
         return self.df.shape[0]
