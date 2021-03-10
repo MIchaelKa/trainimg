@@ -33,6 +33,7 @@ class ResNetModel(nn.Module):
     def __init__(self, model_name, pretrained=False):
         super().__init__()
         print(f'Init torchvision {model_name}, pretrained: {pretrained}')
+        
         model_func = {
             'resnet18': models.resnet18,
             'resnet34': models.resnet34,

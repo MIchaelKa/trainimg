@@ -8,13 +8,15 @@ import albumentations as A
 def get_train_transform(img_size):
     transform = A.Compose([
 
-        A.OneOf([
-            A.Resize(img_size, img_size),
-            A.RandomCrop(width=img_size, height=img_size),
-        ], p=1),
+        A.Resize(img_size, img_size),
+
+        # A.OneOf([
+        #     A.Resize(img_size, img_size),
+        #     A.RandomCrop(width=img_size, height=img_size),
+        # ], p=1),
         
-        A.VerticalFlip(p=0.5),
-        A.HorizontalFlip(p=0.5),
+        # A.VerticalFlip(p=0.5),
+        # A.HorizontalFlip(p=0.5),
 
         # A.Rotate(180, p=0.8),
         
@@ -42,17 +44,25 @@ class ImageDataset(Dataset):
         self.df = df
         self.path = path
         self.transform = transform
-        
+
+        self.target_columns = [
+            'ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
+            'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal',
+            'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal',
+            'Swan Ganz Catheter Present'
+        ]
+
+        self.image_ids = df.StudyInstanceUID
+        self.labels = df[self.target_columns]     
         
     def __len__(self):
         return self.df.shape[0]
     
     def __getitem__(self, index):
-        row = self.df.iloc[index]
-        image_id = row.image_id
-        label = row.label
+        image_id = self.image_ids.iloc[index]
+        label = self.labels.iloc[index].values.astype(float)
         
-        pillow_image = Image.open(self.path+image_id)
+        pillow_image = Image.open(self.path+image_id+'.jpg')
         image = np.array(pillow_image)
         
         if self.transform:
@@ -60,7 +70,8 @@ class ImageDataset(Dataset):
 
         image = image.astype(np.float32)
         image /= 255
-        image = image.transpose(2, 0, 1)
+        image = image[np.newaxis,:]
+        # image = image.transpose(2, 0, 1)
             
         return image, label
 

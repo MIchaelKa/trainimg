@@ -12,8 +12,8 @@ import argparse
 from train import *
 from utils import *
 
-from dataset import *
-# from dataset_a import *
+# from dataset import *
+from dataset_a import *
 
 from model import *
 # from model_timm import *
@@ -21,6 +21,7 @@ from model import *
 
 def create_datasets(
     path_to_data,
+    path_to_img,
     path_to_train,
     img_size,
     reduce_train,
@@ -45,10 +46,11 @@ def create_datasets(
         valid_df = valid_df.sample(frac=1).reset_index(drop=True).head(valid_number)
         print(f'Reduce dataset size, train: {len(train_df)}, valid: {len(valid_df)}')
 
-    img_path = path_to_data + 'train/'
+    if path_to_img is None:
+        path_to_img = path_to_data + 'train/'
 
-    train_dataset = ImageDataset(train_df, img_path, get_train_transform(img_size))
-    valid_dataset = ImageDataset(valid_df, img_path, get_valid_transform(img_size))
+    train_dataset = ImageDataset(train_df, path_to_img, get_train_transform(img_size))
+    valid_dataset = ImageDataset(valid_df, path_to_img, get_valid_transform(img_size))
 
     return train_dataset, valid_dataset, valid_df
 
@@ -171,6 +173,7 @@ def run_loader(
 
 def run(
     path_to_data='/',
+    path_to_img=None,
     path_to_train=None,
     model_name='',
     batch_size_train=32,
@@ -184,7 +187,7 @@ def run(
     num_epoch=10
     ):
     
-    train_dataset, valid_dataset, valid_df = create_datasets(path_to_data, path_to_train, img_size, reduce_train, train_number, valid_number)
+    train_dataset, valid_dataset, valid_df = create_datasets(path_to_data, path_to_img, path_to_train, img_size, reduce_train, train_number, valid_number)
     train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
     # train_dataset = create_train_dataset(path_to_data)
@@ -268,7 +271,12 @@ def run_cv(
 
     return train_infos
 
-def main(path_to_data, path_to_train=None, debug=False):
+def main(
+    path_to_data,
+    path_to_img=None,
+    path_to_train=None,
+    debug=False
+    ):
     SEED = 2020
     seed_everything(SEED)
     print_version()
@@ -278,6 +286,7 @@ def main(path_to_data, path_to_train=None, debug=False):
     if debug:
         params = {
             'path_to_data'     : path_to_data,
+            'path_to_img'      : path_to_img,
             'path_to_train'    : path_to_train,
             'model_name'       : model_name,
             'batch_size_train' : 2,
@@ -293,6 +302,7 @@ def main(path_to_data, path_to_train=None, debug=False):
     else:
         params = {
             'path_to_data'     : path_to_data,
+            'path_to_img'      : path_to_img,
             'path_to_train'    : path_to_train,
             'model_name'       : model_name,
             'batch_size_train' : 32,
@@ -301,7 +311,7 @@ def main(path_to_data, path_to_train=None, debug=False):
             'train_number'     : 12000,
             'valid_number'     : 1000,
             'img_size'         : 256,
-            'learning_rate'    : 1e-4,
+            'learning_rate'    : 2e-4,
             'weight_decay'     : 0, # 1e-3, 5e-4
             'num_epoch'        : 3
         }
