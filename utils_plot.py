@@ -6,19 +6,13 @@ import math
 # sns.set()
 
 def show_train_info(train_info):
-    _, axes = plt.subplots(2, 2, figsize=(15,10))
+    _, axes = plt.subplots(1, 2, figsize=(17,6))
 
-    axes[0,0].set_title("Train loss")
-    axes[0,0].plot(train_info['train_loss_history'])
+    axes[0].set_title("Train loss")
+    axes[0].plot(train_info['train_loss_history'])
 
-    axes[0,1].set_title("Valid loss")
-    axes[0,1].plot(train_info['valid_loss_history'])
-
-    axes[1,0].set_title("Train score")
-    axes[1,0].plot(train_info['train_score_history'])
-
-    axes[1,1].set_title("Valid score")
-    axes[1,1].plot(train_info['valid_score_history'])
+    axes[1].set_title("Valid loss")
+    axes[1].plot(train_info['valid_loss_history'])
 
 def show_train_info_epoch(train_info):
     _, axes = plt.subplots(1, 2, figsize=(17,6))
