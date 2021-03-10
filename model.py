@@ -40,7 +40,7 @@ class ResNetModel(nn.Module):
             'resnext50_32x4d': models.resnext50_32x4d,
         }[model_name]
         resnet = model_func(pretrained=pretrained)
-        resnet.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        # resnet.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
 
         in_features = resnet.fc.in_features

@@ -65,7 +65,8 @@ class ImageDataset(Dataset):
 
         image = image.astype(np.float32)
         image /= 255
-        image = image[np.newaxis,:]
+        # image = image[np.newaxis,:]
+        image = np.repeat(image[np.newaxis,:], 3, axis=0)
         # image = image.transpose(2, 0, 1)
             
         return image, label
