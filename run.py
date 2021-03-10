@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import SubsetRandomSampler
 
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.model_selection import StratifiedKFold, KFold, GroupKFold
 
 import argparse
 
@@ -18,6 +18,8 @@ from dataset_a import *
 from model import *
 # from model_timm import *
 # from model_effnet import *
+
+from config import GlobalConfig
 
 def create_datasets(
     path_to_data,
@@ -196,12 +198,12 @@ def run(
     model = get_model(model_name, pretrained=True)
 
     train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, 0)
-    train_info['target_columns'] = train_dataset.target_columns
 
     return train_info, model
 
 def run_cv(
     path_to_data,
+    path_to_img=None,
     path_to_train=None,
     batch_size_train=32,
     batch_size_valid=32,
@@ -226,47 +228,47 @@ def run_cv(
 
     print(f'Dataset size: {train_df.shape}')
 
-    # skf = StratifiedKFold(n_splits=5, random_state=SEED, shuffle=True)
-    skf = StratifiedKFold(n_splits=5)
-    # skf = KFold(n_splits=5)
+    # cv = StratifiedKFold(n_splits=5, random_state=SEED, shuffle=True)
+    # cv = StratifiedKFold(n_splits=5)
+    # cv = KFold(n_splits=5)
+    cv = GroupKFold(n_splits=5)
 
     X = train_df  
-    y = train_df['label'].values # train.label.values
+    y = train_df[GlobalConfig.target_columns].values # train.label.values
+    groups = train_df['PatientID'].values
 
-    img_path = path_to_data + '/train_images/'
+    if path_to_img is None:
+        path_to_img = path_to_data + '/train_images/'
 
     train_infos = []
     
-    for fold, (train_index, test_index) in enumerate(skf.split(X, y)):
+    for fold, (train_index, test_index) in enumerate(cv.split(X, y, groups)):
         X_train, X_valid = X.loc[train_index], X.loc[test_index]
 
         print('')
         print(f'Fold: {fold}')
         print(X_train.shape, X_valid.shape)
-        print(X_train['label'].value_counts())
-        print(X_valid['label'].value_counts())
+        # print(X_train['PatientID'].value_counts())
+        # print(X_valid['PatientID'].value_counts())
         print('')
 
         # print(train_index.shape, test_index.shape)
         # print(train_index[:5], train_index[-5:], test_index[:5])
 
-        train_dataset = ImageDataset(X_train, img_path, get_train_transform(img_size))
-        valid_dataset = ImageDataset(X_valid, img_path, get_valid_transform(img_size))
+        train_dataset = ImageDataset(X_train, path_to_img, get_train_transform(img_size))
+        valid_dataset = ImageDataset(X_valid, path_to_img, get_valid_transform(img_size))
 
         train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
-        model = get_model(pretrained=True)
+        model = get_model(get_model_name(), pretrained=True)
         train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, fold)
         train_infos.append(train_info)
 
-        X_valid['probs'] = train_info['probs']
-        X_valid['preds'] = train_info['preds']
-        X_valid.to_csv(f'valid_df_{fold}.csv', index=False)
 
-    cv_acc = np.array([i['best_acc'] for i in train_infos])
+    cv_scores = np.array([np.mean(i['best_scores']) for i in train_infos])
     print('')
-    print(f'CV results: {cv_acc}')
-    print(f'CV mean: {cv_acc.mean()}, std: {cv_acc.std()}')
+    print(f'CV results: {cv_scores}')
+    print(f'CV mean: {cv_scores.mean()}, std: {cv_scores.std()}')
     print('CV finished for: {}'.format(format_time(time.time() - t0)))
 
     return train_infos
@@ -318,7 +320,12 @@ def main(
 
     return run(**params)
 
-def main_cv(path_to_data, path_to_train=None, debug=False):
+def main_cv(
+    path_to_data,
+    path_to_img=None,
+    path_to_train=None,
+    debug=False
+    ):
     SEED = 2020
     seed_everything(SEED)
     print_version()
@@ -326,25 +333,27 @@ def main_cv(path_to_data, path_to_train=None, debug=False):
     if debug:
         params = {
         'path_to_data'     : path_to_data,
+        'path_to_img'      : path_to_img,
         'path_to_train'    : path_to_train,
         'batch_size_train' : 2,
         'batch_size_valid' : 2,
         'img_size'         : 32,
         'learning_rate'    : 2e-4,
         'weight_decay'     : 0, # 1e-3, 5e-4
-        'num_epoch'        : 2,
+        'num_epoch'        : 5,
         'debug'            : debug
     }
     else:
         params = {
         'path_to_data'     : path_to_data,
+        'path_to_img'      : path_to_img,
         'path_to_train'    : path_to_train,
         'batch_size_train' : 32,
         'batch_size_valid' : 32,
-        'img_size'         : 384,
+        'img_size'         : 256,
         'learning_rate'    : 2e-4,
         'weight_decay'     : 0, # 1e-3, 5e-4
-        'num_epoch'        : 10,
+        'num_epoch'        : 3,
         'debug'            : debug
     }
 

@@ -5,6 +5,8 @@ import math
 
 # sns.set()
 
+from config import GlobalConfig
+
 def show_train_info(train_info):
     _, axes = plt.subplots(1, 2, figsize=(17,6))
 
@@ -119,10 +121,12 @@ def show_cms(train_info):
 
     axes = axes.flatten()
 
+    target_columns = GlobalConfig.target_columns
+
     for i, cm in enumerate(train_info['best_cms']):
         ax = axes[i]
         score = train_info['best_scores'][i]
-        column = train_info['target_columns'][i]
+        column = target_columns[i]
         ax.set_title(f'{column}\nScore: {score:.5f}', fontsize=15)
         sns.heatmap(
             cm,

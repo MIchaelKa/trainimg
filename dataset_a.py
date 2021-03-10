@@ -5,6 +5,8 @@ from PIL import Image
 import albumentations as A
 # from albumentations.pytorch import ToTensorV2
 
+from config import GlobalConfig
+
 def get_train_transform(img_size):
     transform = A.Compose([
 
@@ -45,15 +47,8 @@ class ImageDataset(Dataset):
         self.path = path
         self.transform = transform
 
-        self.target_columns = [
-            'ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
-            'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal',
-            'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal',
-            'Swan Ganz Catheter Present'
-        ]
-
         self.image_ids = df.StudyInstanceUID
-        self.labels = df[self.target_columns]     
+        self.labels = df[GlobalConfig.target_columns]     
         
     def __len__(self):
         return self.df.shape[0]

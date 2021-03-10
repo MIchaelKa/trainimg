@@ -4,6 +4,8 @@ from PIL import Image
 
 from torchvision import transforms as T
 
+from config import GlobalConfig
+
 # Use mean and std for pretrained models
 # https://pytorch.org/docs/stable/torchvision/models.html
 
@@ -32,15 +34,8 @@ class ImageDataset(Dataset):
         self.path = path
         self.transform = transform
 
-        self.target_columns = [
-            'ETT - Abnormal', 'ETT - Borderline', 'ETT - Normal',
-            'NGT - Abnormal', 'NGT - Borderline', 'NGT - Incompletely Imaged', 'NGT - Normal',
-            'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal',
-            'Swan Ganz Catheter Present'
-        ]
-
         self.image_ids = df.StudyInstanceUID
-        self.labels = df[self.target_columns]
+        self.labels = df[GlobalConfig.target_columns]
         
     def __len__(self):
         return self.df.shape[0]
