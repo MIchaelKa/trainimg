@@ -332,30 +332,30 @@ def main_cv(
 
     if debug:
         params = {
-        'path_to_data'     : path_to_data,
-        'path_to_img'      : path_to_img,
-        'path_to_train'    : path_to_train,
-        'batch_size_train' : 2,
-        'batch_size_valid' : 2,
-        'img_size'         : 32,
-        'learning_rate'    : 2e-4,
-        'weight_decay'     : 0, # 1e-3, 5e-4
-        'num_epoch'        : 5,
-        'debug'            : debug
-    }
+            'path_to_data'     : path_to_data,
+            'path_to_img'      : path_to_img,
+            'path_to_train'    : path_to_train,
+            'batch_size_train' : 2,
+            'batch_size_valid' : 2,
+            'img_size'         : 32,
+            'learning_rate'    : 2e-4,
+            'weight_decay'     : 0, # 1e-3, 5e-4
+            'num_epoch'        : 5,
+            'debug'            : debug
+        }
     else:
         params = {
-        'path_to_data'     : path_to_data,
-        'path_to_img'      : path_to_img,
-        'path_to_train'    : path_to_train,
-        'batch_size_train' : 32,
-        'batch_size_valid' : 32,
-        'img_size'         : 256,
-        'learning_rate'    : 2e-4,
-        'weight_decay'     : 0, # 1e-3, 5e-4
-        'num_epoch'        : 3,
-        'debug'            : debug
-    }
+            'path_to_data'     : path_to_data,
+            'path_to_img'      : path_to_img,
+            'path_to_train'    : path_to_train,
+            'batch_size_train' : 32,
+            'batch_size_valid' : 32,
+            'img_size'         : 256,
+            'learning_rate'    : 2e-4,
+            'weight_decay'     : 0, # 1e-3, 5e-4
+            'num_epoch'        : 6,
+            'debug'            : debug
+        }
 
     return run_cv(**params)
 
