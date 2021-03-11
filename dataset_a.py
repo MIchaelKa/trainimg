@@ -28,9 +28,9 @@ def get_train_transform(img_size):
         # A.CoarseDropout(max_holes=3, max_height=32, max_width=32, p=1),
         # A.CoarseDropout(max_holes=10, max_height=32, max_width=32, p=0.7),
 
-        # A.ToTensorV2(),
         # A.Normalize(mean=[0.485, 0.456, 0.406],
-        #             std=[0.229, 0.224, 0.225])
+        #             std=[0.229, 0.224, 0.225]),
+        # A.ToTensorV2()
     ])
     return transform
 
@@ -40,12 +40,19 @@ def get_valid_transform(img_size):
     ])
     return transform
 
+def get_normalize_transform():
+    transform = A.Normalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225])
+    return transform
+
+
 class ImageDataset(Dataset):
     def __init__(self, df, path, transform=None):
         print('Init dataset A')
         self.df = df
         self.path = path
         self.transform = transform
+        self.normalize = get_normalize_transform()
 
         self.image_ids = df.StudyInstanceUID
         self.labels = df[GlobalConfig.target_columns]     
@@ -64,15 +71,21 @@ class ImageDataset(Dataset):
             image = self.transform(image=image)['image']
 
         image = image.astype(np.float32)
-        image /= 255
-        # image = image[np.newaxis,:]
-        image = np.repeat(image[np.newaxis,:], 3, axis=0)
-        # image = image.transpose(2, 0, 1)
+        # image /= 255
+
+        # for frayscale images
+        # image = np.repeat(image[np.newaxis,:], 3, axis=0)
+        image = np.repeat(image[..., np.newaxis], 3, axis=-1)
+   
+        image = self.normalize(image=image)['image']
+
+        image = image.transpose(2, 0, 1)
             
         return image, label
 
     def get_image_to_show(self, image):
-        return image.transpose(1, 2, 0)
+        return image[0]
+        # return image.transpose(1, 2, 0)
 
 
 class TestImageDataset(Dataset):
