@@ -353,7 +353,7 @@ def main_cv(
             'img_size'         : 256,
             'learning_rate'    : 2e-4,
             'weight_decay'     : 0, # 1e-3, 5e-4
-            'num_epoch'        : 6,
+            'num_epoch'        : 3,
             'debug'            : debug
         }
 
