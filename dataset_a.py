@@ -18,12 +18,12 @@ def get_train_transform(img_size):
         # ], p=1),
         
         # A.VerticalFlip(p=0.5),
-        # A.HorizontalFlip(p=0.5),
+        A.HorizontalFlip(p=0.5),
 
         # A.Rotate(180, p=0.8),
         
         # A.Blur(p=1),
-        A.CLAHE(p=0.5),
+        # A.CLAHE(p=0.5),
         # A.ColorJitter(brightness=0.2, contrast=0.9, saturation=0.2, p=1),
     
         # A.CoarseDropout(max_holes=3, max_height=32, max_width=32, p=1),
