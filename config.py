@@ -7,3 +7,4 @@ class GlobalConfig:
         'CVC - Abnormal', 'CVC - Borderline', 'CVC - Normal',
         'Swan Ganz Catheter Present'
     ]
+    learning_rate = 2e-4

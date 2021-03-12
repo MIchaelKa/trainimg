@@ -133,9 +133,27 @@ def get_model_name():
     model_name = 'resnet18' #'resnet18', 'resnext50d_32x4d'
     return model_name
 
+def get_scheduler(optimizer, num_epoch):
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [2, 4, 6, 8, 9], gamma=0.4)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epoch, eta_min=1e-6, last_epoch=-1)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+    return scheduler
+
+def test_scheduler(learning_rate=3e-4, num_epoch=10):
+    lr_history = []
+    params = (torch.tensor([1,2,3]) for t in range(2))
+    optimizer = torch.optim.Adam(params, lr=learning_rate)
+    scheduler = get_scheduler(optimizer, num_epoch)
+    for epoch in range(num_epoch):
+        optimizer.step()
+        lr_history.append(scheduler.get_last_lr())  
+        scheduler.step()
+
+    return lr_history
 
 def run_loader(
     model,
+    device,
     train_loader,
     valid_loader,
     learning_rate=3e-4,
@@ -152,8 +170,6 @@ def run_loader(
     
     print(run_decription)
   
-    device = get_device()
-
     model.to(device)
 
     # loss = nn.CrossEntropyLoss()
@@ -163,9 +179,7 @@ def run_loader(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [2, 4, 6, 8, 9], gamma=0.4)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epoch) # V17  
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+    scheduler = get_scheduler(optimizer, num_epoch)
 
     print('')
     print('Start training...')
@@ -195,9 +209,11 @@ def run(
     # train_dataset = create_train_dataset(path_to_data)
     # train_loader, valid_loader = create_dataloaders(train_dataset, batch_size, train_number, valid_number)
 
+    device = get_device()
+
     model = get_model(model_name, pretrained=True)
 
-    train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, 0)
+    train_info = run_loader(model, device, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, 0)
 
     return train_info, model
 
@@ -241,6 +257,8 @@ def run_cv(
         path_to_img = path_to_data + '/train_images/'
 
     train_infos = []
+
+    device = get_device()
     
     for fold, (train_index, test_index) in enumerate(cv.split(X, y, groups)):
         X_train, X_valid = X.loc[train_index], X.loc[test_index]
@@ -261,7 +279,8 @@ def run_cv(
         train_loader, valid_loader = create_dataloaders(train_dataset, valid_dataset, batch_size_train, batch_size_valid)
 
         model = get_model(get_model_name(), pretrained=True)
-        train_info = run_loader(model, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, fold)
+
+        train_info = run_loader(model, device, train_loader, valid_loader, learning_rate, weight_decay, num_epoch, fold)
         train_infos.append(train_info)
 
 

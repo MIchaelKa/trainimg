@@ -7,7 +7,7 @@ import datetime
 
 major_version = 2
 minor_version = 0
-version = 1
+version = 2
 
 def print_version():
     print(f'Version: {major_version}.{minor_version}.{version}')
