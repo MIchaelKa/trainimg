@@ -40,12 +40,14 @@ def validate(model, device, val_loader, criterion):
     
     return loss_history, valid_scores, valid_cms
 
-def train_epoch(model, device, train_loader, criterion, optimizer):   
+def train_epoch(model, device, train_loader, criterion, optimizer, scheduler):   
     
     model.train()
 
     train_loss = []
     train_scores = []
+
+    lr_history = []
   
     loss_accum = 0
 
@@ -72,7 +74,12 @@ def train_epoch(model, device, train_loader, criterion, optimizer):
         
         # Save predictions
         meter.update(y_batch, output)
-      
+
+        # Scheduler update
+        if GlobalConfig.scheduler_batch_update:
+            lr_history.append(scheduler.get_last_lr())  
+            scheduler.step()
+
         # running_loss = loss_accum / (index + 1)
         # running_score = np.mean(meter.compute_score())
         # train_scores.append(running_score)
@@ -88,7 +95,7 @@ def train_epoch(model, device, train_loader, criterion, optimizer):
     # if index % val_every == 0:
     #     validate(model, loader_val)
 
-    return train_loss, train_scores, ave_score
+    return train_loss, train_scores, ave_score, lr_history
 
 def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, fold):
    
@@ -117,7 +124,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
         # Train
         t1 = time.time()
-        train_loss, train_scores, ave_score = train_epoch(model, device, train_loader, criterion, optimizer)
+        train_loss, train_scores, ave_score, lr_history_epoch = train_epoch(model, device, train_loader, criterion, optimizer, scheduler)
 
         train_loss_history.extend(train_loss)
         train_score_history.extend(train_scores)
@@ -151,8 +158,11 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
             #save model
             # torch.save(model.state_dict(), f'model_{fold}.pth')
 
-        lr_history.append(scheduler.get_last_lr())  
-        scheduler.step()
+        if GlobalConfig.scheduler_batch_update:
+            lr_history.extend(lr_history_epoch)       
+        else:
+            lr_history.append(scheduler.get_last_lr())  
+            scheduler.step()
              
         print('[valid] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
               .format(epoch+1, valid_loss_mean, valid_score_mean, format_time(time.time() - t1)))

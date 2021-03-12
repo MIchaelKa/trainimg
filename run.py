@@ -133,9 +133,9 @@ def get_model_name():
     model_name = 'resnet18' #'resnet18', 'resnext50d_32x4d'
     return model_name
 
-def get_scheduler(optimizer, num_epoch):
+def get_scheduler(optimizer, iter_number):
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [2, 4, 6, 8, 9], gamma=0.4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epoch, eta_min=1e-6, last_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
     return scheduler
 
@@ -179,7 +179,11 @@ def run_loader(
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-    scheduler = get_scheduler(optimizer, num_epoch)
+    if GlobalConfig.scheduler_batch_update:
+        iter_number = len(train_loader) * num_epoch
+    else:
+        iter_number = num_epoch
+    scheduler = get_scheduler(optimizer, iter_number)
 
     print('')
     print('Start training...')
