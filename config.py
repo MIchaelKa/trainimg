@@ -8,4 +8,4 @@ class GlobalConfig:
         'Swan Ganz Catheter Present'
     ]
     learning_rate = 2e-4
-    scheduler_batch_update = True
+    scheduler_batch_update = False

@@ -134,8 +134,8 @@ def get_model_name():
     return model_name
 
 def get_scheduler(optimizer, iter_number):
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [2, 4, 6, 8, 9], gamma=0.4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 2, 4, 5], gamma=0.4)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
     return scheduler
 
