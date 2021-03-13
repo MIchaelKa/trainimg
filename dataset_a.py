@@ -28,11 +28,11 @@ def get_train_transform(img_size):
 
         # A.ShiftScaleRotate(p=1),
 
-        # A.OneOf([
-        #     A.OpticalDistortion(distort_limit=1.0),
-        #     A.GridDistortion(num_steps=5, distort_limit=1.),
-        #     A.ElasticTransform(alpha=3),
-        # ], p=1),
+        A.OneOf([
+            A.OpticalDistortion(distort_limit=1.0),
+            A.GridDistortion(num_steps=5, distort_limit=1.0),
+            A.ElasticTransform(alpha=3),
+        ], p=0.2),
 
         # A.OneOf([
         #     A.CLAHE(p=0.5),
