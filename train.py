@@ -18,6 +18,7 @@ def validate(model, device, val_loader, criterion):
     loss_history = []
     meter = RocAucMeter(GlobalConfig.target_size)
 
+    # TODO: try to use only with model
     with torch.no_grad():
         for _, (x_batch, y_batch) in enumerate(val_loader):
             x_batch = x_batch.to(device)
@@ -27,7 +28,7 @@ def validate(model, device, val_loader, criterion):
             loss = criterion(output, y_batch)
             
             # Save loss value
-            loss_item = loss.item()     
+            loss_item = loss.item()
             loss_history.append(loss_item)
             
             # Compute score
