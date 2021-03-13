@@ -17,8 +17,8 @@ def get_train_transform(img_size):
         #     A.RandomCrop(width=img_size, height=img_size),
         # ], p=1),
         
-        # A.VerticalFlip(p=0.5),
-        # A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
+        A.HorizontalFlip(p=0.5),
 
         # A.Rotate(180, p=0.8),
         
