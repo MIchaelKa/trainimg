@@ -319,7 +319,7 @@ def main(
         'valid_number'     : 1000,
         'img_size'         : 256,
         'learning_rate'    : 2e-4,
-        'weight_decay'     : 1e-5, # 1e-3, 5e-4
+        'weight_decay'     : 1e-4, # 1e-3, 5e-4
         'num_epoch'        : 6
     }
 
@@ -343,32 +343,24 @@ def main_cv(
     seed_everything(SEED)
     print_version()
 
+    params = {
+        'path_to_data'     : path_to_data,
+        'path_to_img'      : path_to_img,
+        'path_to_train'    : path_to_train,
+        'batch_size_train' : 32,
+        'batch_size_valid' : 32,
+        'img_size'         : 256,
+        'learning_rate'    : 2e-4,
+        'weight_decay'     : 1e-5, # 1e-3, 5e-4
+        'num_epoch'        : 6,
+        'debug'            : debug
+    }
+
     if debug:
-        params = {
-            'path_to_data'     : path_to_data,
-            'path_to_img'      : path_to_img,
-            'path_to_train'    : path_to_train,
-            'batch_size_train' : 2,
-            'batch_size_valid' : 2,
-            'img_size'         : 32,
-            'learning_rate'    : 2e-4,
-            'weight_decay'     : 0, # 1e-3, 5e-4
-            'num_epoch'        : 5,
-            'debug'            : debug
-        }
-    else:
-        params = {
-            'path_to_data'     : path_to_data,
-            'path_to_img'      : path_to_img,
-            'path_to_train'    : path_to_train,
-            'batch_size_train' : 32,
-            'batch_size_valid' : 32,
-            'img_size'         : 256,
-            'learning_rate'    : 2e-4,
-            'weight_decay'     : 1e-5, # 1e-3, 5e-4
-            'num_epoch'        : 6,
-            'debug'            : debug
-        }
+        params['batch_size_train'] = 2
+        params['batch_size_valid'] = 2
+        params['img_size'] = 32
+        params['num_epoch'] = 5
 
     return run_cv(**params)
 
