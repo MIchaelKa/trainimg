@@ -17,8 +17,8 @@ def get_train_transform(img_size):
         #     A.RandomCrop(width=img_size, height=img_size),
         # ], p=1),
         
-        A.VerticalFlip(p=0.5),
-        A.HorizontalFlip(p=0.5),
+        # A.VerticalFlip(p=0.5),
+        # A.HorizontalFlip(p=0.5),
 
         # A.Rotate(180, p=0.8),
         
@@ -28,11 +28,11 @@ def get_train_transform(img_size):
 
         # A.ShiftScaleRotate(p=1),
 
-        A.OneOf([
-            A.OpticalDistortion(distort_limit=1.0),
-            A.GridDistortion(num_steps=5, distort_limit=1.0),
-            A.ElasticTransform(alpha=3),
-        ], p=0.2),
+        # A.OneOf([
+        #     A.OpticalDistortion(distort_limit=1.0),
+        #     A.GridDistortion(num_steps=5, distort_limit=1.0),
+        #     A.ElasticTransform(alpha=3),
+        # ], p=0.2),
 
         # A.OneOf([
         #     A.CLAHE(p=0.5),

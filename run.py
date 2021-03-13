@@ -130,13 +130,13 @@ def get_model(model_name, pretrained=True):
 def get_model_name():
     # model_name = 'efficientnet-b2'
     # model_name = 'resnet200d' # 'resnet50d', 'resnet101d', 'resnet200d'
-    model_name = 'resnet18' #'resnet18', 'resnext50_32x4d'
+    model_name = 'resnext50_32x4d' #'resnet18', 'resnext50_32x4d'
     return model_name
 
 def get_scheduler(optimizer, iter_number):
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 2, 4, 5], gamma=0.4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
     return scheduler
 
 def test_scheduler(learning_rate=3e-4, num_epoch=10):
@@ -319,7 +319,7 @@ def main(
         'valid_number'     : 1000,
         'img_size'         : 256,
         'learning_rate'    : 2e-4,
-        'weight_decay'     : 1e-5, # 1e-3, 5e-4
+        'weight_decay'     : 0, # 1e-5, 1e-3, 5e-4
         'num_epoch'        : 6
     }
 
