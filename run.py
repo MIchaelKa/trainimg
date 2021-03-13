@@ -317,7 +317,7 @@ def main(
         'reduce_train'     : False,
         'train_number'     : 12000,
         'valid_number'     : 1000,
-        'img_size'         : 256,
+        'img_size'         : 512,
         'learning_rate'    : 2e-4,
         'weight_decay'     : 0, # 1e-5, 1e-3, 5e-4
         'num_epoch'        : 6
