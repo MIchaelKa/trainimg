@@ -159,9 +159,9 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
             # torch.save(model.state_dict(), f'model_{fold}.pth')
 
         if GlobalConfig.scheduler_batch_update:
-            lr_history.extend(lr_history_epoch)       
+            lr_history.extend(lr_history_epoch)
         else:
-            lr_history.append(scheduler.get_last_lr())  
+            lr_history.append(scheduler.get_last_lr())
             scheduler.step()
              
         print('[valid] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \

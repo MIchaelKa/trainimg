@@ -130,12 +130,12 @@ def get_model(model_name, pretrained=True):
 def get_model_name():
     # model_name = 'efficientnet-b2'
     # model_name = 'resnet200d' # 'resnet50d', 'resnet101d', 'resnet200d'
-    model_name = 'resnet18' #'resnet18', 'resnext50d_32x4d'
+    model_name = 'resnet18' #'resnet18', 'resnext50_32x4d'
     return model_name
 
 def get_scheduler(optimizer, iter_number):
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 2, 4, 5], gamma=0.4)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 2, 4, 5], gamma=0.4)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
     return scheduler
 
@@ -146,9 +146,8 @@ def test_scheduler(learning_rate=3e-4, num_epoch=10):
     scheduler = get_scheduler(optimizer, num_epoch)
     for epoch in range(num_epoch):
         optimizer.step()
-        lr_history.append(scheduler.get_last_lr())  
+        lr_history.append(scheduler.get_last_lr())
         scheduler.step()
-
     return lr_history
 
 def run_loader(
@@ -308,38 +307,29 @@ def main(
 
     model_name = get_model_name()
 
+    params = {
+        'path_to_data'     : path_to_data,
+        'path_to_img'      : path_to_img,
+        'path_to_train'    : path_to_train,
+        'model_name'       : model_name,
+        'batch_size_train' : 32,
+        'batch_size_valid' : 32,
+        'reduce_train'     : False,
+        'train_number'     : 12000,
+        'valid_number'     : 1000,
+        'img_size'         : 256,
+        'learning_rate'    : 2e-4,
+        'weight_decay'     : 1e-5, # 1e-3, 5e-4
+        'num_epoch'        : 6
+    }
+
     if debug:
-        params = {
-            'path_to_data'     : path_to_data,
-            'path_to_img'      : path_to_img,
-            'path_to_train'    : path_to_train,
-            'model_name'       : model_name,
-            'batch_size_train' : 2,
-            'batch_size_valid' : 2,
-            'reduce_train'     : True,
-            'train_number'     : 10,
-            'valid_number'     : 10,
-            'img_size'         : 256,
-            'learning_rate'    : 3e-4, # 1e-4
-            'weight_decay'     : 0, # 1e-3, 5e-4
-            'num_epoch'        : 5
-        }
-    else:
-        params = {
-            'path_to_data'     : path_to_data,
-            'path_to_img'      : path_to_img,
-            'path_to_train'    : path_to_train,
-            'model_name'       : model_name,
-            'batch_size_train' : 32,
-            'batch_size_valid' : 32,
-            'reduce_train'     : False,
-            'train_number'     : 12000,
-            'valid_number'     : 1000,
-            'img_size'         : 256,
-            'learning_rate'    : 2e-4,
-            'weight_decay'     : 0, # 1e-3, 5e-4
-            'num_epoch'        : 3
-        }
+        params['batch_size_train'] = 2
+        params['batch_size_valid'] = 2
+        params['reduce_train'] = True
+        params['train_number'] = 10
+        params['valid_number'] = 10
+        params['num_epoch'] = 6
 
     return run(**params)
 
@@ -375,7 +365,7 @@ def main_cv(
             'batch_size_valid' : 32,
             'img_size'         : 256,
             'learning_rate'    : 2e-4,
-            'weight_decay'     : 0, # 1e-3, 5e-4
+            'weight_decay'     : 1e-5, # 1e-3, 5e-4
             'num_epoch'        : 6,
             'debug'            : debug
         }
