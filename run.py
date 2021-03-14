@@ -324,7 +324,7 @@ def main(
     }
 
     if debug:
-        params['batch_size_train'] = 2
+        params['batch_size_train'] = 2 # better test real
         params['batch_size_valid'] = 2
         params['reduce_train'] = True
         params['train_number'] = 10
