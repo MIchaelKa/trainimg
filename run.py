@@ -158,23 +158,24 @@ def run_loader(
     learning_rate=3e-4,
     weight_decay=1e-3,
     num_epoch=10,
-    fold=0
+    fold=0,
+    verbose=True,
     ):
 
-    run_decription = (
-        f"learning_rate = {learning_rate}\n"
-        f"weight_decay = {weight_decay}\n"
-        f"num_epoch = {num_epoch}\n"
-    )
-    
-    print(run_decription)
+    if verbose:
+        run_decription = (
+            f"learning_rate = {learning_rate}\n"
+            f"weight_decay = {weight_decay}\n"
+            f"num_epoch = {num_epoch}\n"
+        )
+        print(run_decription)
   
     model.to(device)
 
-    # loss = nn.CrossEntropyLoss()
+    loss = nn.CrossEntropyLoss()
     # pos_weight = torch.tensor([1,1,1,1,1,1,1,1.1,1.1,0.9,1]).to(device)
     # loss = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-    loss = nn.BCEWithLogitsLoss()
+    # loss = nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
@@ -184,9 +185,11 @@ def run_loader(
         iter_number = num_epoch
     scheduler = get_scheduler(optimizer, iter_number)
 
-    print('')
-    print('Start training...')
-    train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, scheduler, num_epoch, fold)
+    if verbose:
+        print('')
+        print('Start training...')
+    
+    train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, scheduler, num_epoch, fold, verbose)
 
     return train_info
 

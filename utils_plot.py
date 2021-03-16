@@ -8,13 +8,21 @@ import math
 from config import GlobalConfig
 
 def show_train_info(train_info):
-    _, axes = plt.subplots(1, 2, figsize=(17,6))
+    _, axes = plt.subplots(2, 2, figsize=(15,10))
 
-    axes[0].set_title("Train loss")
-    axes[0].plot(train_info['train_loss_history'])
+    axes[0,0].set_title("Train loss")
+    axes[0,0].plot(train_info['train_loss_history'])
 
-    axes[1].set_title("Valid loss")
-    axes[1].plot(train_info['valid_loss_history'])
+    axes[0,1].set_title("Valid loss")
+    axes[0,1].plot(train_info['valid_loss_history'])
+
+    axes[1,0].set_title("Train scores")
+    axes[1,0].plot(train_info['train_score_history'])
+
+    axes[1,1].set_title("Valid scores")
+    axes[1,1].plot(train_info['valid_score_history'])
+
+
 
 def show_train_info_epoch(train_info):
     _, axes = plt.subplots(1, 2, figsize=(17,6))
@@ -72,6 +80,7 @@ def show_dataset(dataset, count=5, random=True):
         plt.axis('off')
 
 def show_conv_weight(conv):
+    size = 0.8
     weight = conv.weight.data.cpu().numpy()
     weight = weight.transpose(0, 2, 3, 1)
     num_weight = weight.shape[0]
@@ -79,7 +88,7 @@ def show_conv_weight(conv):
     ubound = 255
     ncol = 8
     nrow = int(num_weight / ncol)
-    fig, axes = plt.subplots(nrow, ncol, figsize=(ncol, nrow))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(ncol * size, nrow * size))
     axes = axes.flatten()
     
     for i, ax in enumerate(axes):
@@ -89,13 +98,15 @@ def show_conv_weight(conv):
         ax.imshow(image.astype('uint8'))
         ax.axis('off')
         
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.show()
 
 # TODO: try
 # from sklearn.metrics import plot_confusion_matrix
-def show_confusion_matrix(confusion_matrix):
-    # plt.figure(figsize=(7,7))
+def show_confusion_matrix(confusion_matrix):   
+    num_classes = confusion_matrix.shape[0]
+    size = num_classes*0.8
+    plt.figure(figsize=(size, size*0.7))
     plt.title("Confusion matrix")
 
     sns.heatmap(

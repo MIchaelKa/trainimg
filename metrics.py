@@ -3,7 +3,7 @@ import torch
 
 from sklearn.metrics import roc_auc_score, confusion_matrix
 
-class RocAucMeter(object):
+class RocAucMeter():
     def __init__(self, num_classes):
         self.num_classes = num_classes
         self.reset()
@@ -30,3 +30,47 @@ class RocAucMeter(object):
 
     def compute_cm(self):
         return [confusion_matrix(self.y_true[:,i], (self.y_pred[:,i] > 0.5).astype(float)) for i in range(self.num_classes)]
+
+
+class AccuracyMeter():
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.acc_history = []
+        self.predictions = []
+        self.ground_truth = []
+        self.total_correct_samples = 0
+        self.total_samples = 0
+
+    def update(self, y_batch, output):
+        # TODO: check if it use GPU memory
+        indices = torch.argmax(output, 1)
+        correct_samples = torch.sum(indices == y_batch)
+        accuracy = float(correct_samples) / y_batch.shape[0]
+
+        self.acc_history.append(accuracy)               
+        self.total_correct_samples += correct_samples
+        self.total_samples += y_batch.shape[0]
+
+        # Save data for calculating of confusion matrix
+        self.predictions.append(indices)
+        self.ground_truth.append(y_batch)
+    
+    def history(self):
+        return self.acc_history
+
+    def compute_score(self):
+        return float(self.total_correct_samples) / self.total_samples
+        
+    def compute_cm(self):
+        predictions = torch.cat(self.predictions).cpu().numpy()
+        ground_truth = torch.cat(self.ground_truth).cpu().numpy()
+
+        return confusion_matrix(ground_truth, predictions)
+
+
+
+
+
+    

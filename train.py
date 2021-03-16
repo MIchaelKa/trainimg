@@ -3,7 +3,7 @@ import torch
 
 from utils import *
 from config import GlobalConfig
-from metrics import RocAucMeter
+from metrics import AccuracyMeter
 
 def train_batch():
     return
@@ -16,7 +16,7 @@ def validate(model, device, val_loader, criterion):
     model.eval()
     
     loss_history = []
-    meter = RocAucMeter(GlobalConfig.target_size)
+    meter = AccuracyMeter()
 
     # TODO: try to use only with model
     with torch.no_grad():
@@ -34,25 +34,22 @@ def validate(model, device, val_loader, criterion):
             # Compute score
             meter.update(y_batch, output)
 
-    valid_scores = meter.compute_score()
+    valid_score = meter.compute_score()
+    valid_scores = meter.history()
     valid_cms = meter.compute_cm()
 
     # print('[valid] -------------------------- score = {:.5f}'.format(valid_score_total))
     
-    return loss_history, valid_scores, valid_cms
+    return loss_history, valid_score, valid_scores, valid_cms
 
 def train_epoch(model, device, train_loader, criterion, optimizer, scheduler):   
     
     model.train()
 
     train_loss = []
-    train_scores = []
-
     lr_history = []
-  
     loss_accum = 0
-
-    meter = RocAucMeter(GlobalConfig.target_size)
+    meter = AccuracyMeter()
 
     print_every = int(len(train_loader) / 5)
     print_every = 1 if print_every == 0 else print_every
@@ -89,16 +86,17 @@ def train_epoch(model, device, train_loader, criterion, optimizer, scheduler):
         #     print('[train] _iter: {:>2d}, loss = {:.5f}, score = {:.5f}'.format(index, running_loss, running_score))
 
     # ave_loss = loss_accum / (index + 1)
-    ave_score = np.mean(meter.compute_score())
+    train_score = meter.compute_score()
+    train_scores = meter.history()
 
     # print('[train] _iter: {:>2d}, loss = {:.5f}, score = {:.5f}'.format(index, ave_loss, ave_score))
     
     # if index % val_every == 0:
     #     validate(model, loader_val)
 
-    return train_loss, train_scores, ave_score, lr_history
+    return train_loss, train_score, train_scores, lr_history
 
-def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, fold):
+def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, fold, verbose):
    
     train_loss_history = []
     train_score_history = []
@@ -114,7 +112,6 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
     valid_best_score = 0
     best_epoch = 0
-    best_scores = []
     best_cms = []
 
     lr_history = []
@@ -125,35 +122,37 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
         # Train
         t1 = time.time()
-        train_loss, train_scores, ave_score, lr_history_epoch = train_epoch(model, device, train_loader, criterion, optimizer, scheduler)
+        train_loss, train_score, train_scores, lr_history_epoch = train_epoch(model, device, train_loader, criterion, optimizer, scheduler)
 
         train_loss_history.extend(train_loss)
         train_score_history.extend(train_scores)
         
+        # TODO: AverageMeter()
         train_loss_mean = np.mean(train_loss)
         
         train_loss_epochs.append(train_loss_mean)
-        train_score_epochs.append(ave_score)
+        train_score_epochs.append(train_score)
         
-        print('[train] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
-              .format(epoch+1, train_loss_mean, ave_score, format_time(time.time() - t1)))
+        if verbose:
+            print('[train] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
+                .format(epoch+1, train_loss_mean, train_score, format_time(time.time() - t1)))
 
         # Validate
         t2 = time.time()     
-        valid_loss, valid_scores, valid_cms = validate(model, device, val_loader, criterion)
+        valid_loss, valid_score, valid_scores, valid_cms = validate(model, device, val_loader, criterion)
         
-        valid_loss_history.extend(valid_loss)
+        valid_loss_history.extend(valid_loss)  
+        valid_score_history.extend(valid_scores)
         
+        # TODO: AverageMeter()
         valid_loss_mean = np.mean(valid_loss)
-        valid_score_mean = np.mean(valid_scores)
         
         valid_loss_epochs.append(valid_loss_mean)
-        valid_score_epochs.append(valid_score_mean)
+        valid_score_epochs.append(valid_score)
 
-        if valid_score_mean > valid_best_score:
-            valid_best_score = valid_score_mean
+        if valid_score > valid_best_score:
+            valid_best_score = valid_score
             best_epoch = epoch
-            best_scores = valid_scores
             best_cms = valid_cms
 
             #save model
@@ -164,17 +163,15 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         else:
             lr_history.append(scheduler.get_last_lr())
             scheduler.step()
-             
-        print('[valid] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
-              .format(epoch+1, valid_loss_mean, valid_score_mean, format_time(time.time() - t1)))
-        
-        # Epoch
-        # print('------- epoch: {:>2d}, time: {}'.format(epoch+1, format_time(time.time() - t1)))
-        # print("---------------------------------------------------------")
-        print('')
 
-    print('[valid] best epoch {:>2d}, score = {:.5f}'.format(best_epoch+1, valid_best_score))
-    print('training finished for: {}'.format(format_time(time.time() - t0)))
+        if verbose:   
+            print('[valid] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
+                .format(epoch+1, valid_loss_mean, valid_score, format_time(time.time() - t1)))
+            print('')
+
+    if verbose:
+        print('[valid] best epoch {:>2d}, score = {:.5f}'.format(best_epoch+1, valid_best_score))
+        print('training finished for: {}'.format(format_time(time.time() - t0)))
 
     train_info = {
         'train_loss_history' : train_loss_history,
@@ -186,7 +183,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         'valid_loss_epochs' : valid_loss_epochs,
         'valid_score_epochs' : valid_score_epochs,
         'lr_history' : lr_history,
-        'best_scores' : best_scores,
+        'best_score' : valid_best_score,
         'best_cms' : best_cms,
     }
  
