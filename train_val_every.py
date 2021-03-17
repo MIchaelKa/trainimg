@@ -30,18 +30,23 @@ def validate(model, device, val_loader, criterion):
             # Update meters
             loss_meter.update(loss.item())
             score_meter.update(y_batch, output)
-   
+  
     return loss_meter, score_meter
 
-def train_epoch(model, device, train_loader, criterion, optimizer, scheduler):
-    
-    model.train()
+def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, scheduler, verbose):   
     
     loss_meter = AverageMeter()
     score_meter = AccuracyMeter()
+
     lr_history = []
+    v_loss_history = []
+    v_score_history = []
+
+    print_every = 100
 
     for index, (x_batch, y_batch) in enumerate(train_loader):
+        model.train()
+
         x_batch = x_batch.to(device)
         y_batch = y_batch.to(device)
 
@@ -60,8 +65,25 @@ def train_epoch(model, device, train_loader, criterion, optimizer, scheduler):
         if GlobalConfig.scheduler_batch_update:
             lr_history.append(scheduler.get_last_lr())  
             scheduler.step()
+ 
+        if index % print_every == 0:
+            t_loss = loss_meter.compute_average()
+            t_score = score_meter.compute_score()
+            
+            v_loss_meter, v_score_meter = validate(model, device, val_loader, criterion)
+
+            v_loss = v_loss_meter.compute_average()
+            v_score = v_score_meter.compute_score()
+
+            v_loss_history.append(v_loss)
+            v_score_history.append(v_score)
+
+            if verbose:
+                # print('[train] _iter: {:>2d}, loss = {:.5f}, score = {:.5f}'.format(index, t_loss, t_score))
+                print('[valid] iter: {:>3d}, loss = {:.5f}, score = {:.5f}'.format(index, v_loss, v_score))
+                # print('')
     
-    return loss_meter, score_meter, lr_history
+    return loss_meter, score_meter, v_loss_history, v_score_history, lr_history
 
 def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, fold, verbose):
    
@@ -89,7 +111,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
         # Train
         t1 = time.time()
-        t_loss_meter, t_score_meter, lr_history_epoch = train_epoch(model, device, train_loader, criterion, optimizer, scheduler)
+        t_loss_meter, t_score_meter, v_loss_history, v_score_history, lr_history_epoch = train_epoch(model, device, train_loader, val_loader, criterion, optimizer, scheduler, verbose)
 
         train_loss_history.extend(t_loss_meter.history)
         train_score_history.extend(t_score_meter.history)
@@ -100,30 +122,9 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         train_loss_epochs.append(train_loss)
         train_score_epochs.append(train_score)
 
-        if verbose:
-            print('[train] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
-                .format(epoch+1, train_loss, train_score, format_time(time.time() - t1)))
-
-        # Validate
-        t2 = time.time()     
-        v_loss_meter, v_score_meter = validate(model, device, val_loader, criterion)
-
-        valid_loss_history.extend(v_loss_meter.history)
-        valid_score_history.extend(v_score_meter.history)
-        
-        valid_loss = v_loss_meter.compute_average()
-        valid_score = v_score_meter.compute_score()
-        
-        valid_loss_epochs.append(valid_loss)
-        valid_score_epochs.append(valid_score)
-
-        if valid_score > valid_best_score:
-            valid_best_score = valid_score
-            best_epoch = epoch
-            best_cms = v_score_meter.compute_cm()
-
-            #save model
-            # torch.save(model.state_dict(), f'model_{fold}.pth')
+        # Valid
+        valid_loss_history.extend(v_loss_history)  
+        valid_score_history.extend(v_score_history)
         
         if GlobalConfig.scheduler_batch_update:
             lr_history.extend(lr_history_epoch)
@@ -131,13 +132,13 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
             lr_history.append(scheduler.get_last_lr())
             scheduler.step()
 
-        if verbose:   
-            print('[valid] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
-                .format(epoch+1, valid_loss, valid_score, format_time(time.time() - t1)))
-            print('')
+    best_index = np.argmax(valid_score_history)
+    valid_best_score = valid_score_history[best_index]
+    valid_best_loss = valid_loss_history[best_index]
 
     if verbose:
-        print('[valid] best epoch {:>2d}, score = {:.5f}'.format(best_epoch+1, valid_best_score))
+        print('')
+        print('[valid] best: {:>3d}, loss = {:.5f}, score = {:.5f}'.format(best_index, valid_best_score, valid_best_loss))
         print('training finished for: {}'.format(format_time(time.time() - t0)))
 
     train_info = {

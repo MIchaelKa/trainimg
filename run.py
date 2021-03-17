@@ -9,17 +9,23 @@ from sklearn.model_selection import StratifiedKFold, KFold, GroupKFold
 
 import argparse
 
-from train import *
+from config import GlobalConfig
+
+if GlobalConfig.val_every:
+    print('import val_every')
+    from train_val_every import *
+else:
+    print('import train')
+    from train import *
+
 from utils import *
 
 # from dataset import *
 from dataset_a import *
 
-from model import *
+# from model import *
 # from model_timm import *
 # from model_effnet import *
-
-from config import GlobalConfig
 
 def create_datasets(
     path_to_data,

@@ -9,3 +9,4 @@ class GlobalConfig:
     ]
     learning_rate = 2e-4
     scheduler_batch_update = False
+    val_every = True

@@ -37,7 +37,7 @@ class AccuracyMeter():
         self.reset()
 
     def reset(self):
-        self.acc_history = []
+        self.history = []
         self.predictions = []
         self.ground_truth = []
         self.total_correct_samples = 0
@@ -49,16 +49,13 @@ class AccuracyMeter():
         correct_samples = torch.sum(indices == y_batch)
         accuracy = float(correct_samples) / y_batch.shape[0]
 
-        self.acc_history.append(accuracy)               
+        self.history.append(accuracy)               
         self.total_correct_samples += correct_samples
         self.total_samples += y_batch.shape[0]
 
         # Save data for calculating of confusion matrix
         self.predictions.append(indices)
         self.ground_truth.append(y_batch)
-    
-    def history(self):
-        return self.acc_history
 
     def compute_score(self):
         return float(self.total_correct_samples) / self.total_samples
@@ -68,6 +65,23 @@ class AccuracyMeter():
         ground_truth = torch.cat(self.ground_truth).cpu().numpy()
 
         return confusion_matrix(ground_truth, predictions)
+
+class AverageMeter():
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.history = []
+        self.sum = 0
+        self.count = 0
+
+    def update(self, x):
+        self.history.append(x)
+        self.sum += x
+        self.count += 1
+
+    def compute_average(self):
+        return np.mean(self.history)
 
 
 

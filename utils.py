@@ -5,12 +5,14 @@ import os
 import time
 import datetime
 
+from config import GlobalConfig
+
 major_version = 2
 minor_version = 0
 version = 2
 
 def print_version():
-    print(f'Version: {major_version}.{minor_version}.{version}')
+    print(f'Version: {major_version}.{minor_version}.{version} val_every: {GlobalConfig.val_every}')
 
 def seed_everything(seed):
     random.seed(seed)
