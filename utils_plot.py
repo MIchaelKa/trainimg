@@ -7,6 +7,34 @@ import math
 
 from config import GlobalConfig
 
+def show_val_info(train_info):
+    _, axes = plt.subplots(1, 2, figsize=(15,5))
+
+    axes[0].set_title("Loss")
+    axes[0].plot(train_info['valid_loss_history'], '-o')
+
+    axes[1].set_title("Scores")
+    axes[1].plot(train_info['valid_score_history'], '-o')
+
+def show_train_val_info(train_info):
+    _, axes = plt.subplots(1, 2, figsize=(15,5))
+
+    x = np.arange(len(train_info['train_loss_epochs']))
+
+    axes[0].set_title("Loss")
+    axes[0].plot(train_info['train_loss_epochs'], '-o')
+    axes[0].plot(train_info['valid_loss_history'], '-o')
+    axes[0].set_xticks(x)
+    axes[0].set_yticks(np.arange(0.25, 2.5, 0.25))
+    axes[0].legend(['train', 'val'], loc='upper right')
+
+    axes[1].set_title("Scores")
+    axes[1].plot(train_info['train_score_epochs'], '-o')
+    axes[1].plot(train_info['valid_score_history'], '-o')
+    axes[1].set_xticks(x)
+    axes[1].set_yticks(np.arange(0.2, 0.9, 0.05))
+    axes[1].legend(['train', 'val'], loc='lower right')
+
 def show_train_info(train_info):
     _, axes = plt.subplots(2, 2, figsize=(15,10))
 
@@ -24,10 +52,8 @@ def show_train_info(train_info):
     axes[1,1].set_title("Valid scores")
     axes[1,1].plot(train_info['valid_score_history'], fmt)
 
-
-
 def show_train_info_epoch(train_info):
-    _, axes = plt.subplots(1, 2, figsize=(17,6))
+    _, axes = plt.subplots(1, 2, figsize=(15,5))
 
     x = np.arange(len(train_info['train_loss_epochs']))
 
@@ -35,12 +61,14 @@ def show_train_info_epoch(train_info):
     axes[0].plot(train_info['train_loss_epochs'], '-o')
     axes[0].plot(train_info['valid_loss_epochs'], '-o')
     axes[0].set_xticks(x)
+    axes[0].set_yticks(np.arange(0.0, 1.75, 0.25))
     axes[0].legend(['train', 'val'], loc='upper right')
 
     axes[1].set_title("Score")
     axes[1].plot(train_info['train_score_epochs'], '-o')
     axes[1].plot(train_info['valid_score_epochs'], '-o')
     axes[1].set_xticks(x)
+    axes[1].set_yticks(np.arange(0.4, 1.0, 0.05))
     axes[1].legend(['train', 'val'], loc='lower right')
 
 def show_history_epoch(history):

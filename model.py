@@ -40,8 +40,10 @@ class ResNetModel(nn.Module):
             'resnext50_32x4d': models.resnext50_32x4d,
         }[model_name]
         resnet = model_func(pretrained=pretrained)
-        # resnet.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        resnet.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.backbone = nn.Sequential(*list(resnet.children())[:-1])
+
+        # self.dropout = nn.Dropout(0.5)
 
         in_features = resnet.fc.in_features
         self.fc = nn.Linear(in_features, GlobalConfig.target_size)
@@ -50,6 +52,7 @@ class ResNetModel(nn.Module):
         
         x = self.backbone(x)
         x = torch.flatten(x, 1)
+        # x = self.dropout(x)
         x = self.fc(x)
         
         return x
@@ -79,6 +82,62 @@ class SimpleModel(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fc(x)
         
+        return x
+
+#
+# SimpleNet
+#
+class BaseBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+            nn.Conv2d(out_channels, out_channels, kernel_size, stride=1, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU()
+        )
+        self.downsample = nn.MaxPool2d(2)
+
+        # self.downsample = nn.Sequential(
+        #     nn.Conv2d(out_channels, out_channels, kernel_size=2, stride=2, padding=0),
+        #     nn.BatchNorm2d(out_channels),
+        #     nn.ReLU(),
+        # )
+
+    def forward(self, x):
+        x = self.block(x)
+        x = self.downsample(x)
+        return x 
+
+
+class SimpleNet(nn.Module):
+    def __init__(self, dropout_p=0.5):
+        super().__init__()
+        print('init SimpleNet')
+
+        channels = [3, 64, 128, 256]
+        self.backbone = nn.Sequential(
+            BaseBlock(channels[0], channels[1]), # 16x16
+            BaseBlock(channels[1], channels[2]), # 8x8
+            BaseBlock(channels[2], channels[3]), # 4x4
+        )    
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.dropout = nn.Dropout(dropout_p)
+
+        # image_size = 4
+        # self.fc = nn.Linear(channels[-1]*(image_size**2), 10)
+
+        self.fc = nn.Linear(channels[-1], 10)
+
+    def forward(self, x):  
+        x = self.backbone(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.dropout(x)
+        x = self.fc(x)
         return x
 
 

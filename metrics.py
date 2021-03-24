@@ -72,13 +72,13 @@ class AverageMeter():
 
     def reset(self):
         self.history = []
-        self.sum = 0
-        self.count = 0
+        self.total_sum = 0
+        self.total_count = 0
 
     def update(self, x):
         self.history.append(x)
-        self.sum += x
-        self.count += 1
+        self.total_sum += x
+        self.total_count += 1
 
     def compute_average(self):
         return np.mean(self.history)

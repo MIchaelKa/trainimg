@@ -141,8 +141,8 @@ def get_model_name():
 
 def get_scheduler(optimizer, iter_number):
     # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 2, 4, 5], gamma=0.4)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
     return scheduler
 
 def test_scheduler(learning_rate=3e-4, num_epoch=10):
@@ -175,7 +175,7 @@ def run_loader(
             f"num_epoch = {num_epoch}\n"
         )
         print(run_decription)
-  
+
     model.to(device)
 
     loss = nn.CrossEntropyLoss()
@@ -183,7 +183,9 @@ def run_loader(
     # loss = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     # loss = nn.BCEWithLogitsLoss()
 
+    # TODO: config! print in run decription
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
 
     if GlobalConfig.scheduler_batch_update:
         iter_number = len(train_loader) * num_epoch

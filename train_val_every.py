@@ -21,8 +21,8 @@ def validate(model, device, val_loader, criterion):
     # TODO: try to use only with model
     with torch.no_grad():
         for _, (x_batch, y_batch) in enumerate(val_loader):
-            x_batch = x_batch.to(device)
-            y_batch = y_batch.to(device)
+            x_batch = x_batch.to(device, dtype=torch.float32)
+            y_batch = y_batch.to(device, dtype=torch.long)
             
             output = model(x_batch)
             loss = criterion(output, y_batch)
@@ -39,6 +39,8 @@ def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, s
     score_meter = AccuracyMeter()
 
     lr_history = []
+    t_loss_history = []
+    t_score_history = []
     v_loss_history = []
     v_score_history = []
 
@@ -47,8 +49,8 @@ def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, s
     for index, (x_batch, y_batch) in enumerate(train_loader):
         model.train()
 
-        x_batch = x_batch.to(device)
-        y_batch = y_batch.to(device)
+        x_batch = x_batch.to(device, dtype=torch.float32)
+        y_batch = y_batch.to(device, dtype=torch.long)
 
         output = model(x_batch)
         loss = criterion(output, y_batch)
@@ -66,9 +68,15 @@ def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, s
             lr_history.append(scheduler.get_last_lr())  
             scheduler.step()
  
-        if index % print_every == 0:
+        if (index + 1) % print_every == 0:
             t_loss = loss_meter.compute_average()
             t_score = score_meter.compute_score()
+
+            t_loss_history.append(t_loss)
+            t_score_history.append(t_score)
+
+            loss_meter.reset()
+            score_meter.reset()
             
             v_loss_meter, v_score_meter = validate(model, device, val_loader, criterion)
 
@@ -83,7 +91,7 @@ def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, s
                 print('[valid] iter: {:>3d}, loss = {:.5f}, score = {:.5f}'.format(index, v_loss, v_score))
                 # print('')
     
-    return loss_meter, score_meter, v_loss_history, v_score_history, lr_history
+    return loss_meter, score_meter, t_loss_history, t_score_history, v_loss_history, v_score_history, lr_history
 
 def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, fold, verbose):
    
@@ -111,16 +119,16 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
         # Train
         t1 = time.time()
-        t_loss_meter, t_score_meter, v_loss_history, v_score_history, lr_history_epoch = train_epoch(model, device, train_loader, val_loader, criterion, optimizer, scheduler, verbose)
+        t_loss_meter, t_score_meter, t_loss_history, t_score_history, v_loss_history, v_score_history, lr_history_epoch = train_epoch(model, device, train_loader, val_loader, criterion, optimizer, scheduler, verbose)
 
         train_loss_history.extend(t_loss_meter.history)
         train_score_history.extend(t_score_meter.history)
         
-        train_loss = t_loss_meter.compute_average()
-        train_score = t_score_meter.compute_score()
+        # train_loss = t_loss_meter.compute_average()
+        # train_score = t_score_meter.compute_score()
         
-        train_loss_epochs.append(train_loss)
-        train_score_epochs.append(train_score)
+        train_loss_epochs.extend(t_loss_history)
+        train_score_epochs.extend(t_score_history)
 
         # Valid
         valid_loss_history.extend(v_loss_history)  
@@ -138,7 +146,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
     if verbose:
         print('')
-        print('[valid] best: {:>3d}, loss = {:.5f}, score = {:.5f}'.format(best_index, valid_best_score, valid_best_loss))
+        print('[valid] best: {:>3d}, loss = {:.5f}, score = {:.5f}'.format(best_index, valid_best_loss, valid_best_score))
         print('training finished for: {}'.format(format_time(time.time() - t0)))
 
     train_info = {
