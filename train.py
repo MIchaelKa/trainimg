@@ -11,6 +11,63 @@ def train_batch():
 def train_val_model():
     return
 
+def train_iter(model, device, train_loader, val_loader, criterion, optimizer, num_iter, verbose):
+    loss_meter = AverageMeter()
+    score_meter = AccuracyMeter()
+
+    t_loss_history = []
+    t_score_history = []
+    v_loss_history = []
+    v_score_history = []
+
+    print_every = 100
+
+    for index, (x_batch, y_batch) in enumerate(train_loader):
+        if index > num_iter:
+            break
+
+        model.train()
+
+        x_batch = x_batch.to(device, dtype=torch.float32)
+        y_batch = y_batch.to(device, dtype=torch.long)
+
+        output = model(x_batch)
+        loss = criterion(output, y_batch)
+        
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        # Update meters
+        loss_meter.update(loss.item())
+        score_meter.update(y_batch, output)
+ 
+        if (index + 1) % print_every == 0:
+            t_loss = loss_meter.compute_average()
+            t_score = score_meter.compute_score()
+
+            t_loss_history.append(t_loss)
+            t_score_history.append(t_score)
+
+            loss_meter.reset()
+            score_meter.reset()
+            
+            v_loss_meter, v_score_meter = validate(model, device, val_loader, criterion)
+
+            v_loss = v_loss_meter.compute_average()
+            v_score = v_score_meter.compute_score()
+
+            v_loss_history.append(v_loss)
+            v_score_history.append(v_score)
+
+            if verbose:
+                # print('[train] _iter: {:>2d}, loss = {:.5f}, score = {:.5f}'.format(index, t_loss, t_score))
+                print('[valid] iter: {:>3d}, loss = {:.5f}, score = {:.5f}'.format(index, v_loss, v_score))
+                # print('')
+    
+    return t_loss_history, t_score_history, v_loss_history, v_score_history
+
+
 def validate(model, device, val_loader, criterion):
 
     model.eval()

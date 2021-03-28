@@ -7,6 +7,10 @@ import math
 
 from config import GlobalConfig
 
+#
+# Train info
+#
+
 def show_val_info(train_info):
     _, axes = plt.subplots(1, 2, figsize=(15,5))
 
@@ -19,17 +23,17 @@ def show_val_info(train_info):
 def show_train_val_info(train_info):
     _, axes = plt.subplots(1, 2, figsize=(15,5))
 
-    x = np.arange(len(train_info['train_loss_epochs']))
+    x = np.arange(len(train_info['train_loss_history']))
 
     axes[0].set_title("Loss")
-    axes[0].plot(train_info['train_loss_epochs'], '-o')
+    axes[0].plot(train_info['train_loss_history'], '-o')
     axes[0].plot(train_info['valid_loss_history'], '-o')
     axes[0].set_xticks(x)
     axes[0].set_yticks(np.arange(0.25, 2.5, 0.25))
     axes[0].legend(['train', 'val'], loc='upper right')
 
     axes[1].set_title("Scores")
-    axes[1].plot(train_info['train_score_epochs'], '-o')
+    axes[1].plot(train_info['train_score_history'], '-o')
     axes[1].plot(train_info['valid_score_history'], '-o')
     axes[1].set_xticks(x)
     axes[1].set_yticks(np.arange(0.2, 0.9, 0.05))
@@ -77,6 +81,9 @@ def show_history_epoch(history):
     ax.set_xticks(x)
     ax.plot(history, '-o')
 
+#
+# Dataset
+#
 
 def show_dataset_grid(dataset):
     nrow, ncol = 3, 3
@@ -109,6 +116,10 @@ def show_dataset(dataset, count=5, random=True):
         plt.grid(False)
         plt.axis('off')
 
+#
+# Conv weights
+#
+
 def show_conv_weight(conv):
     size = 0.8
     weight = conv.weight.data.cpu().numpy()
@@ -130,6 +141,10 @@ def show_conv_weight(conv):
         
     # plt.tight_layout()
     plt.show()
+
+#
+# Confusion matrix
+#
 
 # TODO: try
 # from sklearn.metrics import plot_confusion_matrix
@@ -181,3 +196,35 @@ def show_cms(train_info):
         ax.set_ylabel("Target")
 
     fig.tight_layout(pad=3.0)
+
+#
+# Hyperparams search
+#
+
+def show_param_grid(learning_rates, weight_decays):
+    plt.scatter(learning_rates, weight_decays)
+    plt.title("Random Search")
+    plt.xlabel("learning_rates")
+    plt.ylabel("weight_decays")
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.show()
+
+def show_search_results(results):
+    raw_scores = list(results.values())
+    # scores = (np.arange(20)) ** 2
+    scores = (np.array(raw_scores) * 20) ** 2  
+    keys = list(zip(*results.keys()))
+    learning_rates = list(keys[0])
+    weight_decays = list(keys[1])
+
+    plt.figure(figsize=(8,5))
+    plt.scatter(learning_rates, weight_decays, s=scores, c=raw_scores, cmap='winter')
+    plt.title("Search results")
+    plt.xlabel("learning_rates")
+    plt.ylabel("weight_decays")
+    plt.yscale('log')
+    plt.xscale('log')
+    plt.colorbar()
+    plt.show()
+

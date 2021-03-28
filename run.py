@@ -27,6 +27,10 @@ from dataset_a import *
 # from model_timm import *
 # from model_effnet import *
 
+#
+# create
+#
+
 def create_datasets(
     path_to_data,
     path_to_img,
@@ -111,6 +115,10 @@ def create_dataloaders_sampler(
     
     return train_loader, valid_loader
 
+#
+# get
+#
+
 def get_device():
     if torch.cuda.is_available():       
         device = torch.device("cuda")
@@ -139,39 +147,80 @@ def get_model_name():
     model_name = 'resnext50_32x4d' #'resnet18', 'resnext50_32x4d'
     return model_name
 
-def get_scheduler(optimizer, iter_number):
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [1, 2, 4, 5], gamma=0.4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=iter_number, eta_min=1e-6, last_epoch=-1)
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+def get_scheduler(name, optimizer, iter_number):
+    if name == 'CosineAnnealingLR':
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=iter_number,
+            eta_min=1e-6,
+            last_epoch=-1
+        )
+    elif name == 'MultiStepLR':
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [7, 9], gamma=0.4)
+    elif name == 'None':
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [100], gamma=1)
+
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=1.1)
+    # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda i: 2000*i)
+    
     return scheduler
 
-def test_scheduler(learning_rate=3e-4, num_epoch=10):
+def test_scheduler(name, learning_rate=3e-4, num_epoch=10):
     lr_history = []
     params = (torch.tensor([1,2,3]) for t in range(2))
     optimizer = torch.optim.Adam(params, lr=learning_rate)
-    scheduler = get_scheduler(optimizer, num_epoch)
+    scheduler = get_scheduler(name, optimizer, num_epoch)
     for epoch in range(num_epoch):
         optimizer.step()
         lr_history.append(scheduler.get_last_lr())
         scheduler.step()
     return lr_history
 
+def get_optimizer(name, parameters, lr, weight_decay):
+    if name == 'Adam':
+        optimizer = torch.optim.Adam(
+            parameters,
+            lr=lr,
+            weight_decay=weight_decay
+        )
+    elif name == 'SGD':
+        optimizer = torch.optim.SGD(
+            parameters,
+            lr=lr,
+            momentum=0.9,
+            weight_decay=weight_decay,
+            nesterov=True
+        )
+    else:
+        print("Error: unsupported optimizer")
+    
+    return optimizer
+
+#
+# run
+#
+
 def run_loader(
     model,
     device,
     train_loader,
     valid_loader,
+    optimizer_name,
     learning_rate=3e-4,
     weight_decay=1e-3,
+    scheduler_name='None',
     num_epoch=10,
+    # num_sched_epoch=None,
     fold=0,
     verbose=True,
     ):
 
     if verbose:
         run_decription = (
+            f"optimizer_name = {optimizer_name}\n"
             f"learning_rate = {learning_rate}\n"
             f"weight_decay = {weight_decay}\n"
+            f"scheduler_name = {scheduler_name}\n"
             f"num_epoch = {num_epoch}\n"
         )
         print(run_decription)
@@ -183,21 +232,74 @@ def run_loader(
     # loss = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     # loss = nn.BCEWithLogitsLoss()
 
-    # TODO: config! print in run decription
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
+    optimizer = get_optimizer(optimizer_name, model.parameters(), learning_rate, weight_decay)
 
     if GlobalConfig.scheduler_batch_update:
         iter_number = len(train_loader) * num_epoch
     else:
         iter_number = num_epoch
-    scheduler = get_scheduler(optimizer, iter_number)
+    scheduler = get_scheduler(scheduler_name, optimizer, iter_number)
 
     if verbose:
         print('')
         print('Start training...')
     
     train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, scheduler, num_epoch, fold, verbose)
+
+    return train_info
+
+def run_iter(
+    model,
+    device,
+    train_loader,
+    valid_loader,
+    optimizer_name,
+    learning_rate=3e-4,
+    weight_decay=1e-3,
+    num_iter=300,
+    verbose=True,
+    ):
+
+    if verbose:
+        run_decription = (
+            f"optimizer_name = {optimizer_name}\n"
+            f"learning_rate = {learning_rate}\n"
+            f"weight_decay = {weight_decay}\n"
+            f"num_iter = {num_iter}\n"
+        )
+        print(run_decription)
+
+    model.to(device)
+
+    loss = nn.CrossEntropyLoss()
+
+    optimizer = get_optimizer(optimizer_name, model.parameters(), learning_rate, weight_decay)
+
+    if verbose:
+        print('')
+        print('Start training...')
+
+    t0 = time.time()
+    
+    t_loss_history, t_score_history, v_loss_history, v_score_history = train_iter(model, device, train_loader, valid_loader, loss, optimizer, num_iter, verbose)
+
+    # do not save best, better save last?
+    best_index = np.argmax(v_score_history)
+    valid_best_score = v_score_history[best_index]
+    valid_best_loss = v_loss_history[best_index]
+
+    if verbose:
+        print('')
+        print('[valid] best: {:>3d}, loss = {:.5f}, score = {:.5f}'.format(best_index, valid_best_loss, valid_best_score))
+        print('training finished for: {}'.format(format_time(time.time() - t0)))
+
+    train_info = {
+        'train_loss_history' : t_loss_history,
+        'train_score_history' : t_score_history,
+        'valid_loss_history' : v_loss_history,
+        'valid_score_history' : v_score_history,
+        'best_score' : valid_best_score,
+    }
 
     return train_info
 
