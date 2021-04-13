@@ -28,7 +28,7 @@ def train_iter(model, device, train_loader, val_loader, criterion, optimizer, nu
 
         model.train()
 
-        x_batch = x_batch.to(device, dtype=torch.float32)
+        x_batch = x_batch.to(device, dtype=GlobalConfig.dtype)
         y_batch = y_batch.to(device, dtype=torch.long)
 
         output = model(x_batch)
@@ -78,8 +78,8 @@ def validate(model, device, val_loader, criterion):
     # TODO: try to use only with model
     with torch.no_grad():
         for _, (x_batch, y_batch) in enumerate(val_loader):
-            x_batch = x_batch.to(device)
-            y_batch = y_batch.to(device)
+            x_batch = x_batch.to(device, dtype=GlobalConfig.dtype)
+            y_batch = y_batch.to(device, dtype=torch.long)
             
             output = model(x_batch)
             loss = criterion(output, y_batch)
@@ -99,8 +99,8 @@ def train_epoch(model, device, train_loader, criterion, optimizer, scheduler):
     lr_history = []
 
     for index, (x_batch, y_batch) in enumerate(train_loader):
-        x_batch = x_batch.to(device)
-        y_batch = y_batch.to(device)
+        x_batch = x_batch.to(device, dtype=GlobalConfig.dtype)
+        y_batch = y_batch.to(device, dtype=torch.long)
 
         output = model(x_batch)
         loss = criterion(output, y_batch)
@@ -160,6 +160,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         if verbose:
             print('[train] epoch: {:>2d}, loss = {:.5f}, score = {:.5f}, time: {}' \
                 .format(epoch+1, train_loss, train_score, format_time(time.time() - t1)))
+            # print('[train] epoch: {:>2d}, lr = {:.7f}'.format(epoch+1, lr_history_epoch[-1][0]))
 
         # Validate
         t2 = time.time()     

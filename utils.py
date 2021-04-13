@@ -11,8 +11,20 @@ major_version = 2
 minor_version = 0
 version = 2
 
+def init_everything():
+    SEED = 2020
+    seed_everything(SEED)
+    print_version()
+
 def print_version():
-    print(f'Version: {major_version}.{minor_version}.{version} val_every: {GlobalConfig.val_every}')
+    decription = (
+        f"Version: {major_version}.{minor_version}.{version}\n"
+        f"val_every: {GlobalConfig.val_every}\n"
+        f"scheduler_batch_update: {GlobalConfig.scheduler_batch_update}\n"
+        f"half_precision: {GlobalConfig.half_precision}\n"
+        f"dtype: {GlobalConfig.dtype}\n"
+    )
+    print(decription)
 
 def seed_everything(seed):
     random.seed(seed)

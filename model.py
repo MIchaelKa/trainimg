@@ -4,6 +4,9 @@ import torch.nn as nn
 from torchvision import models
 import torch.nn.functional as F
 
+from torchvision.models.resnet import ResNet
+from torchvision.models.resnet import BasicBlock
+
 from config import GlobalConfig
 
 class DenseNetModel(nn.Module):
@@ -29,6 +32,9 @@ class DenseNetModel(nn.Module):
         
         return x
 
+#
+# ResNet
+#
 class ResNetModel(nn.Module):
     def __init__(self, model_name, pretrained=False):
         super().__init__()
@@ -57,6 +63,66 @@ class ResNetModel(nn.Module):
         
         return x
 
+class MyResNet(ResNet):
+    def __init__(self, block, layers, **kwargs):
+        super().__init__(block, layers, **kwargs)
+
+        # self.inplanes = 16
+            
+        self.stem = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            # nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(64),
+            # nn.ReLU(inplace=True),
+        )
+
+        # replace_stride_with_dilation = [False, False, False]
+
+        # self.layer1 = self._make_layer(block, 16, layers[0])
+        # self.layer2 = self._make_layer(block, 32, layers[1], stride=2,
+        #                                dilate=replace_stride_with_dilation[0])
+        # self.layer3 = self._make_layer(block, 64, layers[2], stride=2,
+        #                                dilate=replace_stride_with_dilation[1])
+    
+        in_features = 256 * block.expansion
+        self.fc = nn.Linear(in_features, GlobalConfig.target_size)
+
+        
+        # del self.conv1
+        # del self.bn1
+        # del self.relu
+        # del self.maxpool
+
+        
+    def forward(self, x):
+        # x = self.conv1(x)
+        # print(x.shape)
+        # x = self.bn1(x)
+        # x = self.relu(x)
+        # x = self.maxpool(x)
+        # print(x.shape)
+
+        x = self.stem(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        # x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)     
+        x = self.fc(x)
+
+        return x
+
+def resnet18(**kwargs):
+    return MyResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+
+#
+# SimpleModel
+#
 class SimpleModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -115,14 +181,14 @@ class BaseBlock(nn.Module):
 class SimpleNet(nn.Module):
     def __init__(self, dropout_p=0.5):
         super().__init__()
-        print('init SimpleNet')
+        # print('init SimpleNet')
 
         channels = [3, 64, 128, 256]
         self.backbone = nn.Sequential(
             BaseBlock(channels[0], channels[1]), # 16x16
             BaseBlock(channels[1], channels[2]), # 8x8
             BaseBlock(channels[2], channels[3]), # 4x4
-        )    
+        )
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.dropout = nn.Dropout(dropout_p)

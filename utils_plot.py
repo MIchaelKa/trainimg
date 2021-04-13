@@ -56,6 +56,26 @@ def show_train_info(train_info):
     axes[1,1].set_title("Valid scores")
     axes[1,1].plot(train_info['valid_score_history'], fmt)
 
+def show_train_info_epoch_2(train_info):
+    _, axes = plt.subplots(1, 2, figsize=(15,5))
+
+    # x = np.arange(len(train_info['train_loss_epochs']))
+    fmt = '-' # '-o' '-'
+
+    axes[0].set_title("Loss")
+    axes[0].plot(train_info['train_loss_epochs'],fmt)
+    axes[0].plot(train_info['valid_loss_epochs'], fmt)
+    # axes[0].set_xticks(x)
+    axes[0].set_yticks(np.arange(0.0, 1.75, 0.25))
+    axes[0].legend(['train', 'val'], loc='upper right')
+
+    axes[1].set_title("Score")
+    axes[1].plot(train_info['train_score_epochs'], fmt)
+    axes[1].plot(train_info['valid_score_epochs'], fmt)
+    # axes[1].set_xticks(x)
+    axes[1].set_yticks(np.arange(0.4, 1.0, 0.05))
+    axes[1].legend(['train', 'val'], loc='lower right')
+
 def show_train_info_epoch(train_info):
     _, axes = plt.subplots(1, 2, figsize=(15,5))
 
@@ -80,6 +100,10 @@ def show_history_epoch(history):
     x = np.arange(len(history))
     ax.set_xticks(x)
     ax.plot(history, '-o')
+
+def show_history(history):
+    fig, ax = plt.subplots(figsize=(6,4))
+    ax.plot(history)
 
 #
 # Dataset

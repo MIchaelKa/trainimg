@@ -83,8 +83,10 @@ class AverageMeter():
     def compute_average(self):
         return np.mean(self.history)
 
-
-
-
-
-    
+    def moving_average(self, alpha):
+        avg_history = [self.history[0]]
+        for i in range(1, len(self.history)):
+            moving_avg = alpha * avg_history[-1] + (1 - alpha) * self.history[i]
+            avg_history.append(moving_avg)
+        return avg_history
+ 
