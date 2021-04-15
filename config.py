@@ -9,8 +9,9 @@ class GlobalConfig:
     half_precision = True
     dtype=None
 
-if GlobalConfig.half_precision:
-    GlobalConfig.dtype=torch.float16
-else:
-    GlobalConfig.dtype=torch.float32
+def init_config():
+    if GlobalConfig.half_precision:
+        GlobalConfig.dtype=torch.float16
+    else:
+        GlobalConfig.dtype=torch.float32
 

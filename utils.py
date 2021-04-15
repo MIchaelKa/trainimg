@@ -5,15 +5,15 @@ import os
 import time
 import datetime
 
-from config import GlobalConfig
+from config import *
 
 major_version = 2
 minor_version = 0
 version = 2
 
-def init_everything():
-    SEED = 2020
-    seed_everything(SEED)
+def init_everything(seed):
+    seed_everything(seed)
+    init_config()
     print_version()
 
 def print_version():

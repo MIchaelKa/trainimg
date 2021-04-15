@@ -101,17 +101,35 @@ def create_dataloaders(
 
 def create_dataloaders_sampler(
     train_dataset,
+    valid_dataset,
     batch_size,
     train_number,
-    valid_number
+    valid_number,
+    num_workers,
+    pin_memory
     ):
     
     all_number = train_number + valid_number
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=SubsetRandomSampler(range(train_number)))
-    valid_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=SubsetRandomSampler(range(train_number, all_number)))
+    train_sampler = SubsetRandomSampler(range(train_number))
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        sampler=train_sampler,
+        num_workers=num_workers,
+        pin_memory=pin_memory
+    )
 
-    print(f'DataLoader size, train: {len(train_loader)}, valid: {len(valid_loader)}')
+    valid_sampler = SubsetRandomSampler(range(train_number, all_number))
+    valid_loader = DataLoader(
+        valid_dataset,
+        batch_size=batch_size,
+        sampler=valid_sampler,
+        num_workers=num_workers,
+        pin_memory=pin_memory
+    )
+
+    print(f'data_loader train: {len(train_loader)}, valid: {len(valid_loader)}')
     
     return train_loader, valid_loader
 
@@ -166,9 +184,10 @@ def get_scheduler(name, optimizer, iter_number):
     elif name == 'OneCycleLR':
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
             optimizer,
-            max_lr=0.5,
+            max_lr=0.3, # TODO: pass this param
             total_steps=iter_number,
-            anneal_strategy='linear'
+            anneal_strategy='linear',
+            # pct_start=0.1
         )
     elif name == 'MultiStepLR':
         scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [25, 40], gamma=0.4)
@@ -307,7 +326,7 @@ def lr_range_test(
             generator = iter(train_loader)
             x_batch, y_batch = next(generator)
 
-        x_batch = x_batch.to(device, dtype=dtype)
+        x_batch = x_batch.to(device, dtype=GlobalConfig.dtype)
         y_batch = y_batch.to(device, dtype=torch.long)
 
         output = model(x_batch)
@@ -343,6 +362,48 @@ def lr_range_test(
 # run
 #
 
+def run_dataset(
+    model,
+    device,
+    train_dataset,
+    valid_dataset,
+    batch_size,
+    optimizer_name,
+    learning_rate=3e-4,
+    weight_decay=1e-3,
+    scheduler_name='None',
+    num_epoch=10,
+    fold=0,
+    verbose=True,
+    ):
+
+    train_number = 49000
+    valid_number = 1000
+    num_workers = 2
+    pin_memory = True
+
+    if verbose:
+        run_decription = (
+            f"batch_size = {batch_size}"
+        )
+        print(run_decription)
+
+    train_loader, valid_loader = create_dataloaders_sampler(
+        train_dataset, valid_dataset,
+        batch_size, train_number, valid_number,
+        num_workers, pin_memory)
+
+    params = {
+        'optimizer_name' : optimizer_name,
+        'learning_rate'  : learning_rate,
+        'weight_decay'   : weight_decay,
+        'scheduler_name' : scheduler_name,
+        'num_epoch'      : num_epoch,
+        'verbose'        : verbose
+    }
+
+    return run_loader(model, device, train_loader, valid_loader, **params)
+    
 def run_loader(
     model,
     device,
@@ -352,6 +413,7 @@ def run_loader(
     learning_rate=3e-4,
     weight_decay=1e-3,
     scheduler_name='None',
+    # scheduler_params=None, 
     num_epoch=10,
     # num_sched_epoch=None,
     fold=0,
