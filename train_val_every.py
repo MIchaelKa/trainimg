@@ -33,7 +33,7 @@ def validate(model, device, val_loader, criterion):
   
     return loss_meter, score_meter
 
-def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, scheduler, verbose):   
+def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, scheduler, scheduler_batch_update, verbose):   
     
     loss_meter = AverageMeter()
     score_meter = AccuracyMeter()
@@ -64,7 +64,7 @@ def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, s
         score_meter.update(y_batch, output)
 
         # Scheduler update
-        if GlobalConfig.scheduler_batch_update:
+        if scheduler_batch_update:
             lr_history.append(scheduler.get_last_lr())  
             scheduler.step()
  
@@ -93,7 +93,7 @@ def train_epoch(model, device, train_loader, val_loader, criterion, optimizer, s
     
     return loss_meter, score_meter, t_loss_history, t_score_history, v_loss_history, v_score_history, lr_history
 
-def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, fold, verbose):
+def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, scheduler_batch_update, num_epochs, fold, verbose):
    
     train_loss_history = []
     train_score_history = []
@@ -119,7 +119,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
         # Train
         t1 = time.time()
-        t_loss_meter, t_score_meter, t_loss_history, t_score_history, v_loss_history, v_score_history, lr_history_epoch = train_epoch(model, device, train_loader, val_loader, criterion, optimizer, scheduler, verbose)
+        t_loss_meter, t_score_meter, t_loss_history, t_score_history, v_loss_history, v_score_history, lr_history_epoch = train_epoch(model, device, train_loader, val_loader, criterion, optimizer, scheduler, scheduler_batch_update, verbose)
 
         train_loss_history.extend(t_loss_meter.history)
         train_score_history.extend(t_score_meter.history)
@@ -134,7 +134,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
         valid_loss_history.extend(v_loss_history)  
         valid_score_history.extend(v_score_history)
         
-        if GlobalConfig.scheduler_batch_update:
+        if scheduler_batch_update:
             lr_history.extend(lr_history_epoch)
         else:
             lr_history.append(scheduler.get_last_lr())

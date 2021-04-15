@@ -129,7 +129,7 @@ def create_dataloaders_sampler(
         pin_memory=pin_memory
     )
 
-    print(f'data_loader train: {len(train_loader)}, valid: {len(valid_loader)}')
+    print(f'data_loader_size train: {len(train_loader)}, valid: {len(valid_loader)}')
     
     return train_loader, valid_loader
 
@@ -165,7 +165,10 @@ def get_model_name():
     model_name = 'resnext50_32x4d' #'resnet18', 'resnext50_32x4d'
     return model_name
 
-def get_scheduler(name, optimizer, iter_number):
+def get_scheduler(optimizer, scheduler_params):
+    name = scheduler_params['name']
+    num_iter = scheduler_params['num_iter']
+
     if name == 'CosineAnnealingLR':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
@@ -184,10 +187,10 @@ def get_scheduler(name, optimizer, iter_number):
     elif name == 'OneCycleLR':
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
             optimizer,
-            max_lr=0.3, # TODO: pass this param
-            total_steps=iter_number,
+            max_lr=scheduler_params['max_lr'],
+            total_steps=num_iter,
             anneal_strategy='linear',
-            # pct_start=0.1
+            pct_start=scheduler_params['pct_start']
         )
     elif name == 'MultiStepLR':
         scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, [25, 40], gamma=0.4)
@@ -203,15 +206,22 @@ def get_scheduler(name, optimizer, iter_number):
 
     return scheduler
 
-def test_scheduler(name, learning_rate=3e-4, num_epoch=10):
+def test_scheduler(scheduler_params):
+    learning_rate = scheduler_params['learning_rate']
+    num_iter = scheduler_params['num_iter']
+
     lr_history = []
+
     params = (torch.tensor([1,2,3]) for t in range(2))
     optimizer = torch.optim.Adam(params, lr=learning_rate)
-    scheduler = get_scheduler(name, optimizer, num_epoch)
-    for epoch in range(num_epoch):
+
+    scheduler = get_scheduler(optimizer, scheduler_params)
+
+    for epoch in range(num_iter):
         optimizer.step()
         lr_history.append(scheduler.get_last_lr())
         scheduler.step()
+
     return lr_history
 
 def get_optimizer(name, parameters, lr, weight_decay): 
@@ -237,128 +247,6 @@ def get_optimizer(name, parameters, lr, weight_decay):
     return optimizer
 
 #
-# LR range test
-#
-
-from torch.optim.lr_scheduler import _LRScheduler
-
-class LinearLR(_LRScheduler):
-    """Linearly increases the learning rate between two boundaries over a number of
-    iterations.
-    Arguments:
-        optimizer (torch.optim.Optimizer): wrapped optimizer.
-        end_lr (float): the final learning rate.
-        num_iter (int): the number of iterations over which the test occurs.
-        last_epoch (int, optional): the index of last epoch. Default: -1.
-    """
-
-    def __init__(self, optimizer, end_lr, num_iter, last_epoch=-1):
-        self.end_lr = end_lr
-
-        if num_iter <= 1:
-            raise ValueError("`num_iter` must be larger than 1")
-        self.num_iter = num_iter
-
-        super(LinearLR, self).__init__(optimizer, last_epoch)
-
-    def get_lr(self):
-        r = self.last_epoch / (self.num_iter - 1)
-        return [base_lr + r * (self.end_lr - base_lr) for base_lr in self.base_lrs]
-
-class ExponentialLR(_LRScheduler):
-    """Exponentially increases the learning rate between two boundaries over a number of
-    iterations.
-    Arguments:
-        optimizer (torch.optim.Optimizer): wrapped optimizer.
-        end_lr (float): the final learning rate.
-        num_iter (int): the number of iterations over which the test occurs.
-        last_epoch (int, optional): the index of last epoch. Default: -1.
-    """
-
-    def __init__(self, optimizer, end_lr, num_iter, last_epoch=-1):
-        self.end_lr = end_lr
-
-        if num_iter <= 1:
-            raise ValueError("`num_iter` must be larger than 1")
-        self.num_iter = num_iter
-
-        super(ExponentialLR, self).__init__(optimizer, last_epoch)
-
-    def get_lr(self):
-        r = self.last_epoch / (self.num_iter - 1)
-        return [base_lr * (self.end_lr / base_lr) ** r for base_lr in self.base_lrs]
-
-def lr_range_test(
-    model,
-    device,
-    train_loader,
-    valid_loader,
-    optimizer_name,
-    num_iter,
-    verbose):
-
-    print_every = 100
-
-    loss_meter = AverageMeter()
-    score_meter = AccuracyMeter()
-    lr_history = []
-
-    model.to(device)
-    criterion = nn.CrossEntropyLoss()
-
-    learning_rate = 1 / num_iter
-    weight_decay = 0
-    optimizer = get_optimizer(optimizer_name, model.parameters(), learning_rate, weight_decay)
-    scheduler = get_scheduler('LRRangeTest', optimizer, num_iter)
-
-    model.train()
-
-    t0 = time.time()
-
-    generator = iter(train_loader)
-    for index in range(num_iter):
-
-        try:
-            # Samples the batch
-            x_batch, y_batch = next(generator)
-        except StopIteration:
-            # restart the generator if the previous generator is exhausted.
-            generator = iter(train_loader)
-            x_batch, y_batch = next(generator)
-
-        x_batch = x_batch.to(device, dtype=GlobalConfig.dtype)
-        y_batch = y_batch.to(device, dtype=torch.long)
-
-        output = model(x_batch)
-        loss = criterion(output, y_batch)
-        
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        loss_meter.update(loss.item())
-        score_meter.update(y_batch, output)
-
-        lr_history.append(scheduler.get_last_lr())  
-        scheduler.step()
-
-        if index % print_every == 0:
-            if verbose:
-                print('lr range test iter: {:>3d}, time: {}'.format(index, format_time(time.time() - t0)))
-            
-    if verbose:
-        print('')
-        print('lr range test finished for: {}'.format(format_time(time.time() - t0)))
-
-    train_info = {
-        'train_loss_history' : loss_meter.history,
-        'train_score_history' : score_meter.history,
-        'lr_history' : lr_history,
-    }
-
-    return train_info, loss_meter
-        
-#
 # run
 #
 
@@ -371,7 +259,7 @@ def run_dataset(
     optimizer_name,
     learning_rate=3e-4,
     weight_decay=1e-3,
-    scheduler_name='None',
+    scheduler_params=None,
     num_epoch=10,
     fold=0,
     verbose=True,
@@ -394,12 +282,12 @@ def run_dataset(
         num_workers, pin_memory)
 
     params = {
-        'optimizer_name' : optimizer_name,
-        'learning_rate'  : learning_rate,
-        'weight_decay'   : weight_decay,
-        'scheduler_name' : scheduler_name,
-        'num_epoch'      : num_epoch,
-        'verbose'        : verbose
+        'optimizer_name'   : optimizer_name,
+        'learning_rate'    : learning_rate,
+        'weight_decay'     : weight_decay,
+        'scheduler_params' : scheduler_params,
+        'num_epoch'        : num_epoch,
+        'verbose'          : verbose
     }
 
     return run_loader(model, device, train_loader, valid_loader, **params)
@@ -412,20 +300,25 @@ def run_loader(
     optimizer_name,
     learning_rate=3e-4,
     weight_decay=1e-3,
-    scheduler_name='None',
-    # scheduler_params=None, 
+    scheduler_params=None,
     num_epoch=10,
-    # num_sched_epoch=None,
     fold=0,
     verbose=True,
     ):
+
+    scheduler_batch_update = scheduler_params['batch_update']
+    if scheduler_batch_update:
+        num_iter = len(train_loader) * num_epoch
+    else:
+        num_iter = num_epoch
+    scheduler_params['num_iter'] = num_iter
 
     if verbose:
         run_decription = (
             f"optimizer_name = {optimizer_name}\n"
             f"learning_rate = {learning_rate}\n"
             f"weight_decay = {weight_decay}\n"
-            f"scheduler_name = {scheduler_name}\n"
+            f"scheduler_params = {scheduler_params}\n"
             f"num_epoch = {num_epoch}\n"
         )
         print(run_decription)
@@ -439,17 +332,12 @@ def run_loader(
 
     optimizer = get_optimizer(optimizer_name, model.parameters(), learning_rate, weight_decay)
 
-    if GlobalConfig.scheduler_batch_update:
-        iter_number = len(train_loader) * num_epoch
-    else:
-        iter_number = num_epoch
-    scheduler = get_scheduler(scheduler_name, optimizer, iter_number)
+    scheduler = get_scheduler(optimizer, scheduler_params)
 
     if verbose:
-        print('')
         print('Start training...')
     
-    train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, scheduler, num_epoch, fold, verbose)
+    train_info = train_model(model, device, train_loader, valid_loader, loss, optimizer, scheduler, scheduler_batch_update, num_epoch, fold, verbose)
 
     return train_info
 

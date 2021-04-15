@@ -20,7 +20,6 @@ def print_version():
     decription = (
         f"Version: {major_version}.{minor_version}.{version}\n"
         f"val_every: {GlobalConfig.val_every}\n"
-        f"scheduler_batch_update: {GlobalConfig.scheduler_batch_update}\n"
         f"half_precision: {GlobalConfig.half_precision}\n"
         f"dtype: {GlobalConfig.dtype}\n"
     )

@@ -90,7 +90,7 @@ def validate(model, device, val_loader, criterion):
    
     return loss_meter, score_meter
 
-def train_epoch(model, device, train_loader, criterion, optimizer, scheduler):
+def train_epoch(model, device, train_loader, criterion, optimizer, scheduler, scheduler_batch_update):
     
     model.train()
     
@@ -114,13 +114,13 @@ def train_epoch(model, device, train_loader, criterion, optimizer, scheduler):
         score_meter.update(y_batch, output)
 
         # Scheduler update
-        if GlobalConfig.scheduler_batch_update:
+        if scheduler_batch_update:
             lr_history.append(scheduler.get_last_lr())  
             scheduler.step()
     
     return loss_meter, score_meter, lr_history
 
-def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, fold, verbose):
+def train_model(model, device, train_loader, val_loader, criterion, optimizer, scheduler, scheduler_batch_update, num_epochs, fold, verbose):
    
     train_loss_history = []
     train_score_history = []
@@ -146,7 +146,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
         # Train
         t1 = time.time()
-        t_loss_meter, t_score_meter, lr_history_epoch = train_epoch(model, device, train_loader, criterion, optimizer, scheduler)
+        t_loss_meter, t_score_meter, lr_history_epoch = train_epoch(model, device, train_loader, criterion, optimizer, scheduler, scheduler_batch_update)
 
         train_loss_history.extend(t_loss_meter.history)
         train_score_history.extend(t_score_meter.history)
@@ -183,7 +183,7 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
             #save model
             # torch.save(model.state_dict(), f'model_{fold}.pth')
         
-        if GlobalConfig.scheduler_batch_update:
+        if scheduler_batch_update:
             lr_history.extend(lr_history_epoch)
         else:
             lr_history.append(scheduler.get_last_lr())
