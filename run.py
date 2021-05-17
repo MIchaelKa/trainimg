@@ -19,6 +19,7 @@ else:
     from train import *
 
 from utils import *
+from loss import *
 
 # from dataset import *
 from dataset_a import *
@@ -129,7 +130,8 @@ def create_dataloaders_sampler(
         pin_memory=pin_memory
     )
 
-    print(f'data_loader_size train: {len(train_loader)}, valid: {len(valid_loader)}')
+    # TODO: verbose support
+    # print(f'data_loader_size train: {len(train_loader)}, valid: {len(valid_loader)}')
     
     return train_loader, valid_loader
 
@@ -325,7 +327,8 @@ def run_loader(
 
     model.to(device)
 
-    loss = nn.CrossEntropyLoss()
+    loss = LabelSmoothingV2()
+    # loss = nn.CrossEntropyLoss()
     # pos_weight = torch.tensor([1,1,1,1,1,1,1,1.1,1.1,0.9,1]).to(device)
     # loss = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     # loss = nn.BCEWithLogitsLoss()

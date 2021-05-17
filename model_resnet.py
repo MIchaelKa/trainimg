@@ -42,7 +42,7 @@ class ResNetCIFAR_10(nn.Module):
         # channels = [3, 32, 64, 128]
         channels = [3, 64, 128, 256]
 
-        block_number = 3
+        block_number = 2
         
         self.stem = nn.Sequential(
             nn.Conv2d(channels[0], channels[1], kernel_size=3, stride=1, padding=1, bias=False),

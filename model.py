@@ -183,26 +183,28 @@ class SimpleNet(nn.Module):
         super().__init__()
         # print('init SimpleNet')
 
-        channels = [3, 64, 128, 256]
+        channels = [3, 64, 128, 256, 512]
         self.backbone = nn.Sequential(
             BaseBlock(channels[0], channels[1]), # 16x16
             BaseBlock(channels[1], channels[2]), # 8x8
             BaseBlock(channels[2], channels[3]), # 4x4
+            BaseBlock(channels[3], channels[4]), # 2x2
         )
 
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.dropout = nn.Dropout(dropout_p)
+        # self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
-        # image_size = 4
-        # self.fc = nn.Linear(channels[-1]*(image_size**2), 10)
+        # self.dropout = nn.Dropout(dropout_p)
 
-        self.fc = nn.Linear(channels[-1], 10)
+        image_size = 2
+        self.fc = nn.Linear(channels[-1]*(image_size**2), 10)
+
+        # self.fc = nn.Linear(channels[-1], 10)
 
     def forward(self, x):  
         x = self.backbone(x)
-        x = self.avgpool(x)
+        # x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        x = self.dropout(x)
+        # x = self.dropout(x)
         x = self.fc(x)
         return x
 

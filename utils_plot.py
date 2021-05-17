@@ -103,6 +103,7 @@ def show_history_epoch(history):
 
 def show_history(history):
     fig, ax = plt.subplots(figsize=(6,4))
+    # ax.set_xticks(x)
     ax.plot(history)
 
 #

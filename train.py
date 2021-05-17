@@ -90,6 +90,44 @@ def validate(model, device, val_loader, criterion):
    
     return loss_meter, score_meter
 
+def h_flip(x):
+    return x.flip(3)
+
+def identity(x):
+    return x
+
+tta_transforms = [
+    h_flip,
+    identity
+]
+
+def validate_tta(model, device, val_loader, transforms, criterion):
+
+    model.eval()
+    
+    loss_meter = AverageMeter()
+    score_meter = AccuracyMeter()
+
+    with torch.no_grad():
+        for _, (x_batch, y_batch) in enumerate(val_loader):
+            x_batch = x_batch.to(device, dtype=GlobalConfig.dtype)
+            y_batch = y_batch.to(device, dtype=torch.long)
+
+            outputs = []
+            for transform in transforms:
+                x = transform(x_batch) 
+                output = model(x)
+                outputs.append(output)
+            output = torch.stack(outputs).mean(0)
+
+            loss = criterion(output, y_batch)
+            
+            # Update meters
+            loss_meter.update(loss.item())
+            score_meter.update(y_batch, output)
+   
+    return loss_meter, score_meter
+
 def train_epoch(model, device, train_loader, criterion, optimizer, scheduler, scheduler_batch_update):
     
     model.train()
@@ -164,7 +202,8 @@ def train_model(model, device, train_loader, val_loader, criterion, optimizer, s
 
         # Validate
         t2 = time.time()     
-        v_loss_meter, v_score_meter = validate(model, device, val_loader, criterion)
+        # v_loss_meter, v_score_meter = validate(model, device, val_loader, criterion)
+        v_loss_meter, v_score_meter = validate_tta(model, device, val_loader, tta_transforms, criterion)
 
         valid_loss_history.extend(v_loss_meter.history)
         valid_score_history.extend(v_score_meter.history)
